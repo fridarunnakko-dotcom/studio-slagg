@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&family=DM+Sans:wght@300;400&family=Space+Mono:wght@400&display=swap");
-
 :root {
   --ink: #272722;
   --paper: #fafaf9;
@@ -22,10 +20,14 @@
   --color-dust: var(--dust);
   --color-lin: var(--lin);
   --color-neon: var(--neon);
+  --ease-studio: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Font family fallbacks used until next/font/google is wired in */
+:root {
   --font-display: "Bricolage Grotesque", sans-serif;
   --font-body: "DM Sans", sans-serif;
   --font-ui: "Space Mono", monospace;
-  --ease-studio: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 * {
