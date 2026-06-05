@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&family=DM+Sans:wght@300;400&family=Space+Mono:wght@400&display=swap");
+
+:root {
+  --ink: #272722;
+  --paper: #fafaf9;
+  --concrete: #d8d7d0;
+  --void: #6f6f65;
+  --dust: #9a9991;
+  --lin: #a89880;
+  --neon: #e7ec68;
+  --line: rgba(39, 39, 34, 0.10);
+  --line-strong: rgba(39, 39, 34, 0.22);
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-concrete: var(--concrete);
+  --color-void: var(--void);
+  --color-dust: var(--dust);
+  --color-lin: var(--lin);
+  --color-neon: var(--neon);
+  --font-display: "Bricolage Grotesque", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-ui: "Space Mono", monospace;
+  --ease-studio: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+}
