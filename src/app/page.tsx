@@ -4,13 +4,13 @@ import { useState } from "react";
 import { HeroStamp } from "@/components/HeroStamp";
 import { SelectedWorks } from "@/components/SelectedWorks";
 import { Footer } from "@/components/Footer";
-import { ConcreteCanvas } from "@/components/ConcreteCanvas";
+import { ThreeCanvas } from "@/components/ThreeCanvas";
 import { defaultConcreteSettings } from "@/components/ConcreteControls";
 
 export default function Home() {
   return (
     <>
-      <ConcreteCanvas settings={defaultConcreteSettings} />
+      <ThreeCanvas />
 
       {/* Hero — full viewport */}
       <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 gap-12">
