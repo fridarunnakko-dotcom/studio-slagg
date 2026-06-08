@@ -1,5 +1,6 @@
 import { HeroStamp } from "@/components/HeroStamp";
 import { SelectedWorks } from "@/components/SelectedWorks";
+import { Footer } from "@/components/Footer";
 
 export default function Home() {
   return (
@@ -37,6 +38,9 @@ export default function Home() {
 
       {/* Selected works */}
       <SelectedWorks />
+
+      {/* Footer */}
+      <Footer />
     </>
   );
 }
