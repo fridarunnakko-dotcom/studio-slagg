@@ -14,27 +14,7 @@ export default function Home() {
 
       {/* Hero — full viewport */}
       <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 gap-12">
-        <p
-          className="text-xs tracking-widest uppercase"
-          style={{ fontFamily: "var(--font-ui)", color: "var(--ink)" }}
-        >
-          Skrap. Yta. Rum.
-        </p>
-
         <HeroStamp />
-
-        <div className="flex flex-col items-center gap-4">
-          <div
-            className="w-16"
-            style={{ height: "1px", background: "var(--ink)" }}
-          />
-          <p
-            className="text-sm"
-            style={{ fontFamily: "var(--font-body)", color: "var(--ink)" }}
-          >
-            info@studioslagg.se
-          </p>
-        </div>
       </section>
 
       {/* Selected works */}
