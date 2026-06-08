@@ -12,12 +12,12 @@ export interface ConcreteSettings {
 }
 
 export const defaultConcreteSettings: ConcreteSettings = {
-  scale: 0.055,
+  scale: 0.031,
   bump: 10,
-  ambient: 0.41,
-  light: 0.6,
-  lightHeight: 0.65,
-  falloff: 1.15,
+  ambient: 0.37,
+  light: 0.64,
+  lightHeight: 0.5,
+  falloff: 1.25,
 };
 
 function Slider({
