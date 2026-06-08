@@ -32,7 +32,8 @@ function spackleHeight(x: number, y: number): number {
 }
 
 const RATIO = 3;
-const BR = 238, BG = 236, BB = 232;
+// --neon: #e7ec68
+const BR = 231, BG = 236, BB = 104;
 
 function buildNormals(w: number, h: number, scale: number, bump: number): Float32Array {
   const normals = new Float32Array(w * h * 3);

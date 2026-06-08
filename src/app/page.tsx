@@ -16,7 +16,7 @@ export default function Home() {
       <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 gap-12">
         <p
           className="text-xs tracking-widest uppercase"
-          style={{ fontFamily: "var(--font-ui)", color: "var(--void)" }}
+          style={{ fontFamily: "var(--font-ui)", color: "var(--ink)" }}
         >
           Skrap. Yta. Rum.
         </p>
@@ -26,11 +26,11 @@ export default function Home() {
         <div className="flex flex-col items-center gap-4">
           <div
             className="w-16"
-            style={{ height: "1px", background: "var(--line-strong)" }}
+            style={{ height: "1px", background: "var(--ink)" }}
           />
           <p
             className="text-sm"
-            style={{ fontFamily: "var(--font-body)", color: "var(--dust)" }}
+            style={{ fontFamily: "var(--font-body)", color: "var(--ink)" }}
           >
             info@studioslagg.se
           </p>
