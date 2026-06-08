@@ -1,18 +1,18 @@
+import { Logo } from "@/components/Logo";
+
 export default function Home() {
   return (
     <main className="flex-1 flex flex-col items-center justify-center min-h-screen px-6">
       <p
-        className="text-xs tracking-widest uppercase mb-8"
+        className="text-xs tracking-widest uppercase mb-12"
         style={{ fontFamily: "var(--font-ui)", color: "var(--void)" }}
       >
         Skrap. Yta. Rum.
       </p>
-      <h1
-        className="text-6xl md:text-8xl font-black uppercase tracking-tight leading-none text-center"
-        style={{ fontFamily: "var(--font-display)", color: "var(--ink)" }}
-      >
-        Studio Slagg
-      </h1>
+      <Logo
+        className="w-full max-w-2xl"
+        style={{ color: "var(--ink)" }}
+      />
       <div
         className="mt-12 w-16"
         style={{ height: "1px", background: "var(--line-strong)" }}
