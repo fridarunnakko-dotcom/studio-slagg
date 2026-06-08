@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { BezierEditor } from "./BezierEditor";
+
+type Bezier = [number, number, number, number];
 
 export interface StampSettings {
   initialScale: number;
@@ -8,6 +11,7 @@ export interface StampSettings {
   blur: number;
   squish: number;
   delay: number;
+  ease: Bezier;
 }
 
 export const defaultSettings: StampSettings = {
@@ -16,6 +20,7 @@ export const defaultSettings: StampSettings = {
   blur: 16,
   squish: 0.96,
   delay: 200,
+  ease: [0.755, 0.05, 0.855, 0.06],
 };
 
 function Slider({
@@ -95,6 +100,16 @@ export function StampControls({
             <Slider label="Blur (px)" value={settings.blur} min={0} max={40} step={1} onChange={set("blur")} />
             <Slider label="Squish" value={settings.squish} min={0.7} max={1} step={0.01} onChange={set("squish")} />
             <Slider label="Delay (ms)" value={settings.delay} min={0} max={2000} step={50} onChange={set("delay")} />
+          </div>
+
+          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }}>
+            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "var(--void)" }}>
+              Easing curve
+            </p>
+            <BezierEditor
+              value={settings.ease}
+              onChange={(ease) => onChange({ ...settings, ease })}
+            />
           </div>
 
           <button

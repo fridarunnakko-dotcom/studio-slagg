@@ -31,7 +31,7 @@ export function HeroStamp({ settings, replayKey }: HeroStampProps) {
         transition: {
           duration: settings.duration,
           times: [0, 0.88, 1],
-          ease: [0.755, 0.05, 0.855, 0.06],
+          ease: settings.ease,
         },
       });
     }, settings.delay);
