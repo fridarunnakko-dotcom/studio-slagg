@@ -1,12 +1,18 @@
+"use client";
+
+import { useState } from "react";
 import { HeroStamp } from "@/components/HeroStamp";
 import { SelectedWorks } from "@/components/SelectedWorks";
 import { Footer } from "@/components/Footer";
 import { ConcreteCanvas } from "@/components/ConcreteCanvas";
+import { ConcreteControls, defaultConcreteSettings, type ConcreteSettings } from "@/components/ConcreteControls";
 
 export default function Home() {
+  const [concrete, setConcrete] = useState<ConcreteSettings>(defaultConcreteSettings);
+
   return (
     <>
-      <ConcreteCanvas />
+      <ConcreteCanvas settings={concrete} />
 
       {/* Hero — full viewport */}
       <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 gap-12">
@@ -38,6 +44,8 @@ export default function Home() {
         <SelectedWorks />
         <Footer />
       </div>
+
+      <ConcreteControls settings={concrete} onChange={setConcrete} />
     </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { type ConcreteSettings } from "./ConcreteControls";
 
 // --- Noise ---
 function hash(x: number, y: number): number {
@@ -23,29 +24,26 @@ function vnoise(x: number, y: number): number {
   );
 }
 
-// Spackle height: large blobs + medium lumps + fine surface
-function height(x: number, y: number): number {
-  const a = vnoise(x,           y          );
+function spackleHeight(x: number, y: number): number {
+  const a = vnoise(x, y);
   const b = vnoise(x * 2.8 + 3.1, y * 2.8 + 1.7) * 0.38;
   const c = vnoise(x * 7.0 + 7.2, y * 7.0 + 5.1) * 0.10;
   return Math.pow(a * 0.65 + b + c, 1.6);
 }
 
-const SCALE = 0.022; // texture zoom — larger = fewer, bigger blobs
-const BUMP  = 5.5;   // normal map strength
-const RATIO = 3;     // render resolution divisor (3 = 1/9 pixels, fast)
+const RATIO = 3;
+const BR = 238, BG = 236, BB = 232;
 
-function buildNormals(w: number, h: number): Float32Array {
+function buildNormals(w: number, h: number, scale: number, bump: number): Float32Array {
   const normals = new Float32Array(w * h * 3);
-  const e = 1.0;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const hL = height((x - e) * SCALE, y * SCALE);
-      const hR = height((x + e) * SCALE, y * SCALE);
-      const hD = height(x * SCALE, (y - e) * SCALE);
-      const hU = height(x * SCALE, (y + e) * SCALE);
-      const nx = (hL - hR) * BUMP;
-      const ny = (hD - hU) * BUMP;
+      const hL = spackleHeight((x - 1) * scale, y * scale);
+      const hR = spackleHeight((x + 1) * scale, y * scale);
+      const hD = spackleHeight(x * scale, (y - 1) * scale);
+      const hU = spackleHeight(x * scale, (y + 1) * scale);
+      const nx = (hL - hR) * bump;
+      const ny = (hD - hU) * bump;
       const nz = 1.0;
       const len = Math.sqrt(nx*nx + ny*ny + nz*nz);
       const i = (y * w + x) * 3;
@@ -57,37 +55,29 @@ function buildNormals(w: number, h: number): Float32Array {
   return normals;
 }
 
-// Base color — off-white stucco
-const BR = 238, BG = 236, BB = 232;
-
 function renderLight(
   ctx: CanvasRenderingContext2D,
   normals: Float32Array,
   w: number, h: number,
-  lx: number, ly: number,   // light pos 0..1
+  lx: number, ly: number,
+  settings: ConcreteSettings,
 ) {
   const imageData = ctx.createImageData(w, h);
   const data = imageData.data;
   const lpx = lx * w, lpy = ly * h;
-  const lpz = Math.max(w, h) * 0.55;            // light height above surface
-  const maxDist2 = (w*w + h*h);
-  const AMBIENT = 0.52, LIGHT = 0.62;
+  const lpz = Math.max(w, h) * settings.lightHeight;
+  const maxDist2 = w*w + h*h;
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const ni = (y * w + x) * 3;
       const nx = normals[ni], ny = normals[ni+1], nz = normals[ni+2];
-
       const dx = lpx - x, dy = lpy - y, dz = lpz;
       const invD = 1 / Math.sqrt(dx*dx + dy*dy + dz*dz);
       const diff = Math.max(0, (nx*dx + ny*dy + nz*dz) * invD);
-
-      // Soft radial falloff
       const dist2 = dx*dx + dy*dy;
-      const atten = 1 - Math.pow(dist2 / maxDist2, 0.55);
-
-      const I = AMBIENT + diff * LIGHT * atten;
-
+      const atten = 1 - Math.pow(dist2 / maxDist2, settings.falloff);
+      const I = settings.ambient + diff * settings.light * atten;
       const pi = (y * w + x) * 4;
       data[pi]   = Math.min(255, BR * I);
       data[pi+1] = Math.min(255, BG * I);
@@ -98,16 +88,34 @@ function renderLight(
   ctx.putImageData(imageData, 0, 0);
 }
 
-export function ConcreteCanvas() {
-  const canvasRef  = useRef<HTMLCanvasElement>(null);
-  const stateRef   = useRef<{
-    normals: Float32Array;
-    w: number; h: number;
-  } | null>(null);
-  const lightRef   = useRef({ x: 0.42, y: 0.35 });
-  const dirtyRef   = useRef(false);
-  const rafRef     = useRef(0);
-  const builtRef   = useRef(false);
+export function ConcreteCanvas({ settings }: { settings: ConcreteSettings }) {
+  const canvasRef    = useRef<HTMLCanvasElement>(null);
+  const normalsRef   = useRef<Float32Array | null>(null);
+  const sizeRef      = useRef({ w: 0, h: 0 });
+  const lightRef     = useRef({ x: 0.42, y: 0.35 });
+  const dirtyRef     = useRef(false);
+  const rafRef       = useRef(0);
+  const settingsRef  = useRef(settings);
+  const buildKeyRef  = useRef("");
+
+  // Keep settingsRef in sync and mark dirty on every change
+  useEffect(() => {
+    settingsRef.current = settings;
+    const key = `${settings.scale}-${settings.bump}`;
+    if (key !== buildKeyRef.current) {
+      // Rebuild normals
+      buildKeyRef.current = key;
+      const { w, h } = sizeRef.current;
+      if (w > 0 && h > 0) {
+        setTimeout(() => {
+          normalsRef.current = buildNormals(w, h, settings.scale, settings.bump);
+          dirtyRef.current = true;
+        }, 0);
+      }
+    } else {
+      dirtyRef.current = true;
+    }
+  }, [settings]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -119,22 +127,22 @@ export function ConcreteCanvas() {
       const h = Math.ceil(window.innerHeight / RATIO);
       canvas.width  = w;
       canvas.height = h;
-
-      // Build normal map off the main thread tick so paint isn't blocked
+      sizeRef.current = { w, h };
+      const { scale, bump } = settingsRef.current;
+      buildKeyRef.current = `${scale}-${bump}`;
       setTimeout(() => {
-        const normals = buildNormals(w, h);
-        stateRef.current = { normals, w, h };
-        builtRef.current = true;
+        normalsRef.current = buildNormals(w, h, scale, bump);
         dirtyRef.current = true;
       }, 0);
     }
 
     function loop() {
-      if (dirtyRef.current && stateRef.current && canvas) {
+      if (dirtyRef.current && normalsRef.current && canvas) {
         const ctx = canvas.getContext("2d");
         if (ctx) {
-          const { normals, w, h } = stateRef.current;
-          renderLight(ctx, normals, w, h, lightRef.current.x, lightRef.current.y);
+          const { w, h } = sizeRef.current;
+          renderLight(ctx, normalsRef.current, w, h,
+            lightRef.current.x, lightRef.current.y, settingsRef.current);
         }
         dirtyRef.current = false;
       }
@@ -149,16 +157,11 @@ export function ConcreteCanvas() {
       dirtyRef.current = true;
     }
 
-    function onResize() {
-      builtRef.current = false;
-      setup();
-    }
-
     window.addEventListener("mousemove", onMove);
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", setup);
     return () => {
       window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", setup);
       cancelAnimationFrame(rafRef.current);
     };
   }, []);
