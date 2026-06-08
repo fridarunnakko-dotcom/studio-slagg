@@ -1,12 +1,15 @@
 import { HeroStamp } from "@/components/HeroStamp";
 import { SelectedWorks } from "@/components/SelectedWorks";
 import { Footer } from "@/components/Footer";
+import { ConcreteCanvas } from "@/components/ConcreteCanvas";
 
 export default function Home() {
   return (
     <>
+      <ConcreteCanvas />
+
       {/* Hero — full viewport */}
-      <section className="flex flex-col items-center justify-center min-h-screen px-6 gap-12">
+      <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 gap-12">
         <p
           className="text-xs tracking-widest uppercase"
           style={{ fontFamily: "var(--font-ui)", color: "var(--void)" }}
@@ -31,10 +34,10 @@ export default function Home() {
       </section>
 
       {/* Selected works */}
-      <SelectedWorks />
-
-      {/* Footer */}
-      <Footer />
+      <div className="relative z-10" style={{ background: "var(--paper)" }}>
+        <SelectedWorks />
+        <Footer />
+      </div>
     </>
   );
 }
