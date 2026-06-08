@@ -5,7 +5,6 @@ import { HeroStamp } from "@/components/HeroStamp";
 import { SelectedWorks } from "@/components/SelectedWorks";
 import { Footer } from "@/components/Footer";
 import { ThreeCanvas } from "@/components/ThreeCanvas";
-import { defaultConcreteSettings } from "@/components/ConcreteControls";
 
 export default function Home() {
   return (
