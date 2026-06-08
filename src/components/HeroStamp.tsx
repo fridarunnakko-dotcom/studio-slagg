@@ -1,48 +1,51 @@
 "use client";
 
 import { motion, useAnimation } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Logo } from "./Logo";
+import { type StampSettings } from "./StampControls";
 
-const STAMP_DURATION = 0.55;
+interface HeroStampProps {
+  settings: StampSettings;
+  replayKey: number;
+}
 
-export function HeroStamp() {
+export function HeroStamp({ settings, replayKey }: HeroStampProps) {
   const logoControls = useAnimation();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
-    async function run() {
-      logoControls.set({
-        scale: 4,
-        opacity: 0,
-        filter: "blur(16px)",
-      });
+    if (timerRef.current) clearTimeout(timerRef.current);
 
+    logoControls.set({
+      scale: settings.initialScale,
+      opacity: 0,
+      filter: `blur(${settings.blur}px)`,
+    });
+
+    timerRef.current = setTimeout(async () => {
       await logoControls.start({
-        scale: [4, 0.96, 1],
+        scale: [settings.initialScale, settings.squish, 1],
         opacity: [0, 1, 1],
-        filter: ["blur(16px)", "blur(0px)", "blur(0px)"],
+        filter: [`blur(${settings.blur}px)`, "blur(0px)", "blur(0px)"],
         transition: {
-          duration: STAMP_DURATION,
+          duration: settings.duration,
           times: [0, 0.88, 1],
           ease: [0.755, 0.05, 0.855, 0.06],
         },
       });
+    }, settings.delay);
 
-    }
-
-    const timer = setTimeout(run, 200);
-    return () => clearTimeout(timer);
-  }, [logoControls]);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [replayKey, settings, logoControls]);
 
   return (
-    <div className="relative flex items-center justify-center w-full max-w-2xl">
-      <motion.div
-        animate={logoControls}
-        style={{ width: "100%", color: "var(--ink)" }}
-      >
+    <div className="flex items-center justify-center w-full max-w-2xl">
+      <motion.div animate={logoControls} style={{ width: "100%", color: "var(--ink)" }}>
         <Logo style={{ width: "100%", height: "auto" }} />
       </motion.div>
-
     </div>
   );
 }
