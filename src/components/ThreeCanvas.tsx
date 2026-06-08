@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { type ConcreteSettings } from "./ConcreteControls";
 
 // Vertex shader — passes UV and clip-space position through
 const vert = /* glsl */`
@@ -84,8 +85,21 @@ void main() {
 }
 `;
 
-export function ThreeCanvas() {
-  const containerRef = useRef<HTMLDivElement>(null);
+export function ThreeCanvas({ settings }: { settings: ConcreteSettings }) {
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const settingsRef   = useRef(settings);
+  const uniformsRef   = useRef<Record<string, { value: unknown }> | null>(null);
+
+  // Sync settings into uniforms without re-running the effect
+  useEffect(() => {
+    settingsRef.current = settings;
+    const u = uniformsRef.current;
+    if (!u) return;
+    (u.uAmbient   as { value: number }).value   = settings.ambient;
+    (u.uIntensity as { value: number }).value   = settings.light;
+    (u.uBump      as { value: number }).value   = settings.bump;
+    (u.uScale     as { value: number }).value   = settings.scale;
+  }, [settings]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -100,14 +114,16 @@ export function ThreeCanvas() {
     camera.position.z = 1;
     const scene = new THREE.Scene();
 
+    const s = settingsRef.current;
     const uniforms = {
       uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-      uLight:      { value: new THREE.Vector3(0.5, 0.5, 0.65) },
-      uAmbient:    { value: 0.41 },
-      uIntensity:  { value: 0.6 },
-      uBump:       { value: 10.0 },
-      uScale:      { value: 0.055 },
+      uLight:      { value: new THREE.Vector3(0.5, 0.5, s.lightHeight) },
+      uAmbient:    { value: s.ambient },
+      uIntensity:  { value: s.light },
+      uBump:       { value: s.bump },
+      uScale:      { value: s.scale },
     };
+    uniformsRef.current = uniforms as Record<string, { value: unknown }>;
 
     const geometry = new THREE.PlaneGeometry(2, 2);
     const material = new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, uniforms });
@@ -117,7 +133,7 @@ export function ThreeCanvas() {
       uniforms.uLight.value.set(
         e.clientX / window.innerWidth,
         1 - e.clientY / window.innerHeight,
-        0.65,
+        settingsRef.current.lightHeight,
       );
     }
     window.addEventListener("mousemove", onMouseMove);
