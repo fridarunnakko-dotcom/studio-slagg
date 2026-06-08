@@ -3,43 +3,44 @@
 import { motion, useAnimation } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { Logo } from "./Logo";
-import { type StampSettings } from "./StampControls";
 
-interface HeroStampProps {
-  settings: StampSettings;
-  replayKey: number;
-}
+const SETTINGS = {
+  initialScale: 5,
+  duration: 0.55,
+  blur: 8,
+  squish: 0.91,
+  delay: 850,
+  ease: [0.87, -0.0, 0.81, 1.0] as const,
+};
 
-export function HeroStamp({ settings, replayKey }: HeroStampProps) {
+export function HeroStamp() {
   const logoControls = useAnimation();
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-
     logoControls.set({
-      scale: settings.initialScale,
+      scale: SETTINGS.initialScale,
       opacity: 0,
-      filter: `blur(${settings.blur}px)`,
+      filter: `blur(${SETTINGS.blur}px)`,
     });
 
     timerRef.current = setTimeout(async () => {
       await logoControls.start({
-        scale: [settings.initialScale, settings.squish, 1],
+        scale: [SETTINGS.initialScale, SETTINGS.squish, 1],
         opacity: [0, 1, 1],
-        filter: [`blur(${settings.blur}px)`, "blur(0px)", "blur(0px)"],
+        filter: [`blur(${SETTINGS.blur}px)`, "blur(0px)", "blur(0px)"],
         transition: {
-          duration: settings.duration,
+          duration: SETTINGS.duration,
           times: [0, 0.88, 1],
-          ease: settings.ease,
+          ease: [...SETTINGS.ease],
         },
       });
-    }, settings.delay);
+    }, SETTINGS.delay);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [replayKey, settings, logoControls]);
+  }, [logoControls]);
 
   return (
     <div className="flex items-center justify-center w-full max-w-2xl">
