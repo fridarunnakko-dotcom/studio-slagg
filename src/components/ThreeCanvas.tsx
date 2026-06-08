@@ -3,62 +3,86 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-// --- Noise (same algorithm as canvas prototype) ---
-function hash(x: number, y: number): number {
-  let h = (x * 1619 + y * 31337 + 1013904223) >>> 0;
-  h = (Math.imul(h ^ (h >>> 16), 0x45d9f3b)) >>> 0;
-  h = (Math.imul(h ^ (h >>> 16), 0x45d9f3b)) >>> 0;
-  return (h >>> 0) / 0xffffffff;
+// Vertex shader — passes UV and clip-space position through
+const vert = /* glsl */`
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
+
+// Fragment shader — procedural spackle normal + Phong lighting, per pixel
+const frag = /* glsl */`
+precision highp float;
+varying vec2 vUv;
+
+uniform vec2  uResolution;   // viewport in CSS pixels
+uniform vec3  uLight;        // light position in UV space (z = height fraction)
+uniform float uAmbient;
+uniform float uIntensity;
+uniform float uBump;
+uniform float uScale;        // noise scale (blobs per pixel)
+
+// --- Integer hash (matches JS prototype) ---
+float hash2(int ix, int iy) {
+  uint x = uint(ix);
+  uint y = uint(iy);
+  uint h = (x * 1619u + y * 31337u + 1013904223u);
+  h ^= (h >> 16u); h = h * 0x45d9f3bu;
+  h ^= (h >> 16u); h = h * 0x45d9f3bu;
+  return float(h) / float(0xffffffffu);
 }
 
-function vnoise(x: number, y: number): number {
-  const ix = Math.floor(x), iy = Math.floor(y);
-  const fx = x - ix, fy = y - iy;
-  const ux = fx * fx * (3 - 2 * fx);
-  const uy = fy * fy * (3 - 2 * fy);
-  return (
-    hash(ix,   iy  ) * (1-ux) * (1-uy) +
-    hash(ix+1, iy  ) * ux     * (1-uy) +
-    hash(ix,   iy+1) * (1-ux) * uy     +
-    hash(ix+1, iy+1) * ux     * uy
-  );
+float vnoise(float px, float py) {
+  int ix = int(floor(px));
+  int iy = int(floor(py));
+  float fx = px - float(ix);
+  float fy = py - float(iy);
+  float ux = fx*fx*(3.0 - 2.0*fx);
+  float uy = fy*fy*(3.0 - 2.0*fy);
+  return
+    hash2(ix,   iy  ) * (1.0-ux) * (1.0-uy) +
+    hash2(ix+1, iy  ) * ux       * (1.0-uy) +
+    hash2(ix,   iy+1) * (1.0-ux) * uy       +
+    hash2(ix+1, iy+1) * ux       * uy;
 }
 
-function spackleHeight(x: number, y: number): number {
-  const a = vnoise(x, y);
-  const b = vnoise(x * 2.8 + 3.1, y * 2.8 + 1.7) * 0.38;
-  const c = vnoise(x * 7.0 + 7.2, y * 7.0 + 5.1) * 0.10;
-  return Math.pow(a * 0.65 + b + c, 1.6);
+float spackle(float x, float y) {
+  float a = vnoise(x, y);
+  float b = vnoise(x*2.8+3.1, y*2.8+1.7) * 0.38;
+  float c = vnoise(x*7.0+7.2, y*7.0+5.1) * 0.10;
+  return pow(a*0.65 + b + c, 1.6);
 }
 
-const TEX_SIZE  = 512;
-const TEX_SCALE = 0.055; // blob density
-const BUMP      = 10;    // normal map strength
+void main() {
+  // Map UV → pixel coords (consistent scale across any viewport)
+  vec2 px = vUv * uResolution;
+  float s = uScale;
 
-function buildNormalMap(): THREE.DataTexture {
-  const data = new Uint8Array(TEX_SIZE * TEX_SIZE * 4);
-  for (let y = 0; y < TEX_SIZE; y++) {
-    for (let x = 0; x < TEX_SIZE; x++) {
-      const hL = spackleHeight((x - 1) * TEX_SCALE, y * TEX_SCALE);
-      const hR = spackleHeight((x + 1) * TEX_SCALE, y * TEX_SCALE);
-      const hD = spackleHeight(x * TEX_SCALE, (y - 1) * TEX_SCALE);
-      const hU = spackleHeight(x * TEX_SCALE, (y + 1) * TEX_SCALE);
-      let nx = (hL - hR) * BUMP;
-      let ny = (hD - hU) * BUMP;
-      let nz = 1.0;
-      const len = Math.sqrt(nx*nx + ny*ny + nz*nz);
-      nx /= len; ny /= len; nz /= len;
-      const i = (y * TEX_SIZE + x) * 4;
-      data[i]   = Math.round((nx * 0.5 + 0.5) * 255); // R = X
-      data[i+1] = Math.round((ny * 0.5 + 0.5) * 255); // G = Y
-      data[i+2] = Math.round((nz * 0.5 + 0.5) * 255); // B = Z
-      data[i+3] = 255;
-    }
-  }
-  const tex = new THREE.DataTexture(data, TEX_SIZE, TEX_SIZE, THREE.RGBAFormat);
-  tex.needsUpdate = true;
-  return tex;
+  // Finite-difference normal
+  float hL = spackle((px.x - 1.0)*s, px.y*s);
+  float hR = spackle((px.x + 1.0)*s, px.y*s);
+  float hD = spackle(px.x*s, (px.y - 1.0)*s);
+  float hU = spackle(px.x*s, (px.y + 1.0)*s);
+  vec3 N = normalize(vec3((hL - hR)*uBump, (hD - hU)*uBump, 1.0));
+
+  // Light vector (uLight.xy in UV space, z is height in UV units)
+  vec2 lightPx = uLight.xy * uResolution;
+  float lightZ  = uLight.z  * max(uResolution.x, uResolution.y);
+  vec3 L = normalize(vec3(lightPx - px, lightZ));
+
+  float diff   = max(0.0, dot(N, L));
+  float dist2  = dot(lightPx - px, lightPx - px);
+  float maxD2  = dot(uResolution, uResolution);
+  float atten  = 1.0 - pow(dist2 / maxD2, 1.15);
+  float I      = uAmbient + diff * uIntensity * atten;
+
+  // Neon surface color #e7ec68
+  vec3 color = vec3(0.906, 0.925, 0.408) * I;
+  gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
 }
+`;
 
 export function ThreeCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -67,53 +91,37 @@ export function ThreeCanvas() {
     const container = containerRef.current;
     if (!container) return;
 
-    // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
 
-    // Camera — ortho, plane fills it exactly
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
     camera.position.z = 1;
-
-    // Scene
     const scene = new THREE.Scene();
 
-    // Lights
-    const ambient = new THREE.AmbientLight(0xffffff, 1.2);
-    scene.add(ambient);
+    const uniforms = {
+      uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      uLight:      { value: new THREE.Vector3(0.5, 0.5, 0.65) },
+      uAmbient:    { value: 0.41 },
+      uIntensity:  { value: 0.6 },
+      uBump:       { value: 10.0 },
+      uScale:      { value: 0.055 },
+    };
 
-    const pointLight = new THREE.PointLight(0xffffff, 8, 0, 2);
-    pointLight.position.set(0, 0.2, 0.6);
-    scene.add(pointLight);
-
-    // Build normal map (runs once, ~100ms)
-    const normalMap = buildNormalMap();
-
-    // Plane with PBR material
     const geometry = new THREE.PlaneGeometry(2, 2);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xe7ec68,
-      normalMap,
-      normalScale: new THREE.Vector2(1, 1),
-      roughness: 1.0,
-      metalness: 0.0,
-    });
+    const material = new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, uniforms });
     scene.add(new THREE.Mesh(geometry, material));
 
-    // Mouse → point light
     function onMouseMove(e: MouseEvent) {
-      pointLight.position.set(
-        (e.clientX / window.innerWidth)  *  2 - 1,
-        (e.clientY / window.innerHeight) * -2 + 1,
-        0.6,
+      uniforms.uLight.value.set(
+        e.clientX / window.innerWidth,
+        1 - e.clientY / window.innerHeight,
+        0.65,
       );
     }
     window.addEventListener("mousemove", onMouseMove);
 
-    // RAF loop
     let rafId: number;
     function animate() {
       rafId = requestAnimationFrame(animate);
@@ -121,9 +129,9 @@ export function ThreeCanvas() {
     }
     animate();
 
-    // Resize
     function onResize() {
       renderer.setSize(window.innerWidth, window.innerHeight);
+      uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
     }
     window.addEventListener("resize", onResize);
 
@@ -131,7 +139,6 @@ export function ThreeCanvas() {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("resize", onResize);
       cancelAnimationFrame(rafId);
-      normalMap.dispose();
       geometry.dispose();
       material.dispose();
       renderer.dispose();
