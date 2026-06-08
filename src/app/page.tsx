@@ -27,12 +27,6 @@ export default function Home() {
           >
             info@studioslagg.se
           </p>
-          <p
-            className="text-xs"
-            style={{ fontFamily: "var(--font-ui)", color: "var(--concrete)" }}
-          >
-            Benjamin was here &lt;3
-          </p>
         </div>
       </section>
 
