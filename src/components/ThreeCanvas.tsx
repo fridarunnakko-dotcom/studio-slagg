@@ -90,16 +90,18 @@ void main() {
 
   // --- Emboss from logo mask ---
   if (uHasLogo > 0.5) {
-    float bx = 1.0 / uResolution.x;
-    float by = 1.0 / uResolution.y;
+    // uBevel = bevel width in pixels — offset sampling on the sharp mask
+    // keeps letter corners blocky while controlling ramp width precisely
+    float bx = uBevel / uResolution.x;
+    float by = uBevel / uResolution.y;
     float mC2  = texture2D(uLogoMask, vUv).r;
     float mL2  = texture2D(uLogoMask, vUv + vec2(-bx,  0)).r;
     float mR2  = texture2D(uLogoMask, vUv + vec2( bx,  0)).r;
     float mD2  = texture2D(uLogoMask, vUv + vec2(  0,-by)).r;
     float mU2  = texture2D(uLogoMask, vUv + vec2(  0, by)).r;
-    vec3 N_bevel   = normalize(vec3((mL2-mR2)*uBevel, (mD2-mU2)*uBevel, 1.0));
+    vec3 N_bevel   = normalize(vec3((mL2-mR2)*5.0, (mD2-mU2)*5.0, 1.0));
     float depression = 1.0 - mC2;
-    float edge       = min(1.0, (abs(mL2-mR2) + abs(mD2-mU2)) * 20.0);
+    float edge       = min(1.0, (abs(mL2-mR2) + abs(mD2-mU2)) * 8.0);
     N = normalize(mix(N, N_bevel, max(depression, edge) * uEmboss));
   }
 

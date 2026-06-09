@@ -26,16 +26,8 @@ function buildMask(svgEl: SVGSVGElement): Promise<HTMLCanvasElement> {
       sCtx.drawImage(img, rect.left, rect.top, rect.width, rect.height);
       URL.revokeObjectURL(url);
 
-      // Blur to create smooth gradient at letter edges → proper rounded bevel normals
-      // Radius proportional to letter height so it scales with viewport
-      const bevelPx = Math.max(6, Math.round(rect.height * 0.18));
-      const blurred = document.createElement("canvas");
-      blurred.width = W; blurred.height = H;
-      const bCtx = blurred.getContext("2d")!;
-      bCtx.filter = `blur(${bevelPx}px)`;
-      bCtx.drawImage(sharp, 0, 0);
-
-      resolve(blurred);
+      // Sharp mask — bevel shaping happens in the shader via offset sampling
+      resolve(sharp);
     };
     img.src = url;
   });
