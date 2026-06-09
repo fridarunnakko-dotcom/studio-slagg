@@ -23,6 +23,8 @@ uniform float     uAmbient;
 uniform float     uIntensity;
 uniform float     uBump;
 uniform float     uScale;
+uniform float     uRoughness;  // micro-noise on normals
+uniform float     uColorVar;   // peak/valley color contrast
 uniform sampler2D uLogoMask;
 uniform float     uEmboss;     // 0 → 1 fade-in
 uniform float     uBevel;      // bevel sharpness
@@ -58,39 +60,49 @@ float spackle(float x, float y) {
 
 void main() {
   vec2 px = vUv * uResolution;
-
-  // --- Spackle normal ---
   float s = uScale;
-  float hL = spackle((px.x-1.0)*s, px.y*s);
-  float hR = spackle((px.x+1.0)*s, px.y*s);
-  float hD = spackle(px.x*s, (px.y-1.0)*s);
-  float hU = spackle(px.x*s, (px.y+1.0)*s);
+
+  // --- Macro spackle normal (blobs) ---
+  float hC  = spackle(px.x*s,       px.y*s);
+  float hL  = spackle((px.x-1.0)*s, px.y*s);
+  float hR  = spackle((px.x+1.0)*s, px.y*s);
+  float hD  = spackle(px.x*s, (px.y-1.0)*s);
+  float hU  = spackle(px.x*s, (px.y+1.0)*s);
   vec3 N = normalize(vec3((hL-hR)*uBump, (hD-hU)*uBump, 1.0));
+
+  // --- Micro-roughness: fine grain noise breaks up the "3D model" look ---
+  float ms = s * 9.0;
+  float mhL = vnoise((px.x-0.5)*ms, px.y*ms);
+  float mhR = vnoise((px.x+0.5)*ms, px.y*ms);
+  float mhD = vnoise(px.x*ms, (px.y-0.5)*ms);
+  float mhU = vnoise(px.x*ms, (px.y+0.5)*ms);
+  vec3 N_micro = normalize(vec3((mhL-mhR)*2.5, (mhD-mhU)*2.5, 1.0));
+  N = normalize(mix(N, N_micro, uRoughness));
+
+  // --- Color variation: darker cement paste in valleys, lighter aggregate peaks ---
+  // hC: 0=valley, 1=peak
+  vec3 baseColor = vec3(0.906, 0.925, 0.408);
+  // Valleys shift slightly warmer/darker, peaks stay neon
+  vec3 color = mix(baseColor - vec3(uColorVar*1.2, uColorVar*0.8, uColorVar*0.3),
+                   baseColor + vec3(uColorVar*0.3, uColorVar*0.4, 0.0),
+                   hC);
 
   // --- Emboss from logo mask ---
   if (uHasLogo > 0.5) {
-    // Sample mask at current pixel + neighbours (3px kernel for bevel width)
     float bx = 3.0 / uResolution.x;
     float by = 3.0 / uResolution.y;
-    float mC  = texture2D(uLogoMask, vUv).r;
-    float mL2 = texture2D(uLogoMask, vUv + vec2(-bx,  0)).r;
-    float mR2 = texture2D(uLogoMask, vUv + vec2( bx,  0)).r;
-    float mD2 = texture2D(uLogoMask, vUv + vec2(  0,-by)).r;
-    float mU2 = texture2D(uLogoMask, vUv + vec2(  0, by)).r;
-
-    // Bevel normal: gradient of mask as height map (white=up, black=pressed-in)
-    vec3 N_bevel = normalize(vec3((mL2-mR2)*uBevel, (mD2-mU2)*uBevel, 1.0));
-
-    // Depression: 0 = outside letters, 1 = inside letters (black in mask)
-    float depression = 1.0 - mC;
-    // Edge: where gradient is nonzero
-    float edge = min(1.0, (abs(mL2-mR2) + abs(mD2-mU2)) * 20.0);
-
-    float influence = max(depression, edge) * uEmboss;
-    N = normalize(mix(N, N_bevel, influence));
+    float mC2  = texture2D(uLogoMask, vUv).r;
+    float mL2  = texture2D(uLogoMask, vUv + vec2(-bx,  0)).r;
+    float mR2  = texture2D(uLogoMask, vUv + vec2( bx,  0)).r;
+    float mD2  = texture2D(uLogoMask, vUv + vec2(  0,-by)).r;
+    float mU2  = texture2D(uLogoMask, vUv + vec2(  0, by)).r;
+    vec3 N_bevel   = normalize(vec3((mL2-mR2)*uBevel, (mD2-mU2)*uBevel, 1.0));
+    float depression = 1.0 - mC2;
+    float edge       = min(1.0, (abs(mL2-mR2) + abs(mD2-mU2)) * 20.0);
+    N = normalize(mix(N, N_bevel, max(depression, edge) * uEmboss));
   }
 
-  // --- Lighting ---
+  // --- Lighting (diffuse only — no specular, concrete is fully matte) ---
   vec2 lightPx = uLight.xy * uResolution;
   float lightZ  = uLight.z  * max(uResolution.x, uResolution.y);
   vec3 L = normalize(vec3(lightPx - px, lightZ));
@@ -98,17 +110,19 @@ void main() {
   float diff  = max(0.0, dot(N, L));
   float dist2 = dot(lightPx - px, lightPx - px);
   float maxD2 = dot(uResolution, uResolution);
-  float atten = 1.0 - pow(dist2/maxD2, 1.15);
-  float I     = uAmbient + diff * uIntensity * atten;
+  float atten = 1.0 - pow(dist2/maxD2, uFalloff);
 
-  // Subtle AO inside letter depressions
+  // Wrap the diffuse: real concrete scatters light into shadow (Oren-Nayar-like feel)
+  float diffWrapped = diff * 0.8 + 0.2 * (1.0 - diff) * 0.2;
+  float I = uAmbient + diffWrapped * uIntensity * atten;
+
+  // AO inside emboss depressions
   if (uHasLogo > 0.5) {
-    float depression2 = (1.0 - texture2D(uLogoMask, vUv).r) * uEmboss;
-    I *= 1.0 - depression2 * uAO;
+    float dep = (1.0 - texture2D(uLogoMask, vUv).r) * uEmboss;
+    I *= 1.0 - dep * uAO;
   }
 
-  vec3 color = vec3(0.906, 0.925, 0.408) * I;
-  gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
+  gl_FragColor = vec4(clamp(color * I, 0.0, 1.0), 1.0);
 }
 `;
 
@@ -131,6 +145,9 @@ export function ThreeCanvas({
     uIntensity:  { value: number };
     uBump:       { value: number };
     uScale:      { value: number };
+    uRoughness:  { value: number };
+    uColorVar:   { value: number };
+    uFalloff:    { value: number };
     uLogoMask:   { value: THREE.Texture };
     uEmboss:     { value: number };
     uBevel:      { value: number };
@@ -145,10 +162,13 @@ export function ThreeCanvas({
     settingsRef.current = settings;
     const u = uniformsRef.current;
     if (!u) return;
-    u.uAmbient.value   = settings.ambient;
-    u.uIntensity.value = settings.light;
-    u.uBump.value      = settings.bump;
-    u.uScale.value     = settings.scale;
+    u.uAmbient.value    = settings.ambient;
+    u.uIntensity.value  = settings.light;
+    u.uBump.value       = settings.bump;
+    u.uScale.value      = settings.scale;
+    u.uRoughness.value  = settings.roughness;
+    u.uColorVar.value   = settings.colorVar;
+    u.uFalloff.value    = settings.falloff;
   }, [settings]);
 
   useEffect(() => {
@@ -191,6 +211,9 @@ export function ThreeCanvas({
       uIntensity:  { value: s.light },
       uBump:       { value: s.bump },
       uScale:      { value: s.scale },
+      uRoughness:  { value: s.roughness },
+      uColorVar:   { value: s.colorVar },
+      uFalloff:    { value: s.falloff },
       uLogoMask:   { value: new THREE.Texture() },
       uEmboss:     { value: 0 },
       uBevel:      { value: embossRef.current.bevel },

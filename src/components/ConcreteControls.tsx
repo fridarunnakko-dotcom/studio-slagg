@@ -5,6 +5,8 @@ import { useState } from "react";
 export interface ConcreteSettings {
   scale: number;
   bump: number;
+  roughness: number;  // micro-noise on normals
+  colorVar: number;   // peak/valley color contrast
   ambient: number;
   light: number;
   lightHeight: number;
@@ -14,6 +16,8 @@ export interface ConcreteSettings {
 export const defaultConcreteSettings: ConcreteSettings = {
   scale: 0.031,
   bump: 10,
+  roughness: 0.4,
+  colorVar: 0.06,
   ambient: 0.37,
   light: 0.64,
   lightHeight: 0.5,
@@ -124,6 +128,22 @@ export function ConcreteControls({
               step={0.5}
               onChange={set("bump")}
               rebuilds
+            />
+            <Slider
+              label="Roughness"
+              value={settings.roughness}
+              min={0}
+              max={1}
+              step={0.01}
+              onChange={set("roughness")}
+            />
+            <Slider
+              label="Color var"
+              value={settings.colorVar}
+              min={0}
+              max={0.2}
+              step={0.005}
+              onChange={set("colorVar")}
             />
           </div>
 
