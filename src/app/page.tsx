@@ -13,15 +13,16 @@ export default function Home() {
   const [concrete, setConcrete] = useState(defaultConcreteSettings);
   const [stamp,    setStamp]    = useState(defaultStampSettings);
   const [emboss,   setEmboss]   = useState(defaultEmbossSettings);
-  const [replayKey, setReplayKey] = useState(0);
-  const [logoMask,  setLogoMask]  = useState<HTMLCanvasElement | null>(null);
+  const [replayKey,    setReplayKey]    = useState(0);
+  const [logoMask,     setLogoMask]     = useState<HTMLCanvasElement | null>(null);
+  const [lightLocked,  setLightLocked]  = useState(true);
 
-  const onLanded  = useCallback((mask: HTMLCanvasElement) => setLogoMask(mask), []);
-  const onReplay  = useCallback(() => { setLogoMask(null); setReplayKey(k => k + 1); }, []);
+  const onLanded = useCallback((mask: HTMLCanvasElement) => { setLogoMask(mask); setLightLocked(false); }, []);
+  const onReplay = useCallback(() => { setLogoMask(null); setLightLocked(true); setReplayKey(k => k + 1); }, []);
 
   return (
     <>
-      <ThreeCanvas settings={concrete} emboss={emboss} logoMask={logoMask} />
+      <ThreeCanvas settings={concrete} emboss={emboss} logoMask={logoMask} lockLight={lightLocked} />
 
       <div className="fixed inset-0 z-10 flex flex-col items-center justify-center px-6 pointer-events-none">
         <HeroStamp settings={stamp} replayKey={replayKey} onLanded={onLanded} />

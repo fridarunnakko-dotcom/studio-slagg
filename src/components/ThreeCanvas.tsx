@@ -165,10 +165,12 @@ export function ThreeCanvas({
   settings,
   emboss,
   logoMask,
+  lockLight,
 }: {
   settings: ConcreteSettings;
   emboss: EmbossSettings;
   logoMask: HTMLCanvasElement | null;
+  lockLight?: boolean;
 }) {
   const containerRef  = useRef<HTMLDivElement>(null);
   const settingsRef   = useRef(settings);
@@ -194,6 +196,10 @@ export function ThreeCanvas({
   } | null>(null);
   const embossStartRef = useRef<number | null>(null);
   const logoMaskRef    = useRef(logoMask);
+  const lockLightRef   = useRef(lockLight);
+
+  // Sync lockLight ref
+  useEffect(() => { lockLightRef.current = lockLight; }, [lockLight]);
 
   // Sync settings into uniforms
   useEffect(() => {
@@ -278,7 +284,11 @@ export function ThreeCanvas({
     const material = new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, uniforms });
     scene.add(new THREE.Mesh(geometry, material));
 
+    // Fixed upper-left position while animation plays
+    uniforms.uLight.value.set(0.15, 0.85, settingsRef.current.lightHeight);
+
     function onMouseMove(e: MouseEvent) {
+      if (lockLightRef.current) return;
       uniforms.uLight.value.set(
         e.clientX / window.innerWidth,
         1 - e.clientY / window.innerHeight,
