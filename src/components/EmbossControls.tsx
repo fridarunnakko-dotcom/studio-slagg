@@ -16,8 +16,8 @@ export const defaultEmbossSettings: EmbossSettings = {
   ao:          0.05,
   smoothing:   0.7,
   duration:    2000,
-  letterScale: 0.043,
-  letterBump:  12,
+  letterScale: 0.011,
+  letterBump:  1,
 };
 
 function Slider({
