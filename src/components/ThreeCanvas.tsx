@@ -60,25 +60,39 @@ float spackle(float x, float y) {
   return pow(a*0.65+b+c, 1.6);
 }
 
+// Troweled stucco — sweeping arcs + fine grain, used inside debossed letters
+float plaster(float x, float y) {
+  float fa = vnoise(x * 0.018 + 1.3, y * 0.018 + 2.7) * 6.28318;
+  float cosA = cos(fa), sinA = sin(fa);
+  float u =  x * cosA + y * sinA;
+  float v = (-x * sinA + y * cosA) * 8.0;
+  float stroke = vnoise(u * 0.5, v * 0.5);
+  float fa2 = vnoise(x * 0.04 + 5.1, y * 0.04 + 3.8) * 6.28318;
+  float u2  =  x * cos(fa2) + y * sin(fa2);
+  float v2  = (-x * sin(fa2) + y * cos(fa2)) * 6.0;
+  float stroke2 = vnoise(u2 * 1.2, v2 * 1.2) * 0.3;
+  float grain = vnoise(x * 3.5 + 3.1, y * 3.5 + 1.7) * 0.12
+              + vnoise(x * 8.0 + 7.2, y * 8.0 + 5.4) * 0.06;
+  return stroke * 0.62 + stroke2 + grain;
+}
+
 void main() {
   vec2 px = vUv * uResolution;
   float s = uScale;
 
-  // Inside debossed letters: stamp presses surface flat → less bump + roughness
+  // Inside debossed letters: blend toward troweled plaster texture
   float depression0 = 0.0;
   if (uHasLogo > 0.5) {
-    depression0 = (1.0 - texture2D(uLogoMask, vUv).r) * uEmboss * uSmoothing;
+    depression0 = (1.0 - texture2D(uLogoMask, vUv).r) * uEmboss;
   }
-  float bumpScale     = uBump     * (1.0 - depression0);
-  float roughnessScale = uRoughness * (1.0 - depression0);
+  float blend = depression0 * uSmoothing; // uSmoothing now = plaster blend amount
 
-  // --- Macro spackle normal (blobs) ---
-  float hC  = spackle(px.x*s,       px.y*s);
-  float hL  = spackle((px.x-1.0)*s, px.y*s);
-  float hR  = spackle((px.x+1.0)*s, px.y*s);
-  float hD  = spackle(px.x*s, (px.y-1.0)*s);
-  float hU  = spackle(px.x*s, (px.y+1.0)*s);
-  vec3 N = normalize(vec3((hL-hR)*bumpScale, (hD-hU)*bumpScale, 1.0));
+  float hC  = mix(spackle(px.x*s,       px.y*s),       plaster(px.x*s,       px.y*s),       blend);
+  float hL  = mix(spackle((px.x-1.0)*s, px.y*s),       plaster((px.x-1.0)*s, px.y*s),       blend);
+  float hR  = mix(spackle((px.x+1.0)*s, px.y*s),       plaster((px.x+1.0)*s, px.y*s),       blend);
+  float hD  = mix(spackle(px.x*s, (px.y-1.0)*s),       plaster(px.x*s, (px.y-1.0)*s),       blend);
+  float hU  = mix(spackle(px.x*s, (px.y+1.0)*s),       plaster(px.x*s, (px.y+1.0)*s),       blend);
+  vec3 N = normalize(vec3((hL-hR)*uBump, (hD-hU)*uBump, 1.0));
 
   // --- Micro-roughness ---
   float ms = s * 9.0;
@@ -87,7 +101,7 @@ void main() {
   float mhD = vnoise(px.x*ms, (px.y-0.5)*ms);
   float mhU = vnoise(px.x*ms, (px.y+0.5)*ms);
   vec3 N_micro = normalize(vec3((mhL-mhR)*2.5, (mhD-mhU)*2.5, 1.0));
-  N = normalize(mix(N, N_micro, roughnessScale));
+  N = normalize(mix(N, N_micro, uRoughness));
 
   // --- Color variation: darker cement paste in valleys, lighter aggregate peaks ---
   // hC: 0=valley, 1=peak
