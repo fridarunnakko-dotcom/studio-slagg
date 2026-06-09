@@ -109,14 +109,11 @@ void main() {
       (texture2D(uLogoMask, vUv + vec2(0, -d4*ry)).r - texture2D(uLogoMask, vUv + vec2(0,  d4*ry)).r);
     gx /= 4.0; gy /= 4.0;
 
-    // Negate gradient → normals slope INTO the depression (impressed, not embossed)
-    vec3 N_bevel = normalize(vec3(-gx * 3.0, -gy * 3.0, 1.0));
+    // Gradient points from letter (black) toward background (white) = outward from hole.
+    // Using it directly tilts normals INTO the depression → deboss shadow pattern.
+    vec3 N_bevel = normalize(vec3(gx * 6.0, gy * 6.0, 1.0));
     float edgeStrength = clamp(length(vec2(gx, gy)) * 5.0, 0.0, 1.0) * uEmboss;
     N = normalize(mix(N, N_bevel, edgeStrength));
-
-    // Subtle shadow inside the depression (much softer than before)
-    float depression = (1.0 - texture2D(uLogoMask, vUv).r) * uEmboss;
-    N = normalize(mix(N, vec3(0.0, 0.0, 1.0), depression * uAO * 0.5));
   }
 
   // --- Lighting ---
@@ -131,6 +128,12 @@ void main() {
 
   float diffWrapped = diff * 0.8 + 0.2 * (1.0 - diff) * 0.2;
   float I = uAmbient + diffWrapped * uIntensity * atten;
+
+  // AO: shadow inside the depression — essential for deboss readability
+  if (uHasLogo > 0.5) {
+    float depression = (1.0 - texture2D(uLogoMask, vUv).r) * uEmboss;
+    I *= 1.0 - depression * uAO;
+  }
 
   gl_FragColor = vec4(clamp(color * I, 0.0, 1.0), 1.0);
 }
