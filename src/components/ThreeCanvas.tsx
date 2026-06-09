@@ -25,7 +25,6 @@ uniform float     uBump;
 uniform float     uScale;
 uniform float     uRoughness;  // micro-noise on normals
 uniform float     uColorVar;   // peak/valley color contrast
-uniform float     uSpecular;   // 0 = matte, 1 = shiny
 uniform float     uFalloff;    // light distance falloff
 uniform sampler2D uLogoMask;
 uniform float     uEmboss;     // 0 → 1 fade-in
@@ -114,18 +113,9 @@ void main() {
   float maxD2 = dot(uResolution, uResolution);
   float atten = 1.0 - pow(dist2/maxD2, uFalloff);
 
-  // Diffuse response: matte=0 scatters flat like chalk, shiny=1 is sharp Lambert
-  // At 0: shadow floor lifted to ~60% of lit — barely any highlight
-  float diffMatte = mix(0.55, 1.0, diff);
-  float diffBlended = mix(diffMatte, diff, uSpecular);
-  float I = uAmbient + diffBlended * uIntensity * atten;
-
-  // Blinn-Phong specular — only meaningful above 0
-  vec3 V = vec3(0.0, 0.0, 1.0);
-  vec3 H = normalize(L + V);
-  float shininess = mix(4.0, 128.0, uSpecular * uSpecular);
-  float spec = pow(max(0.0, dot(N, H)), shininess) * uSpecular * uIntensity * atten;
-  I += spec;
+  // Wrap the diffuse: real concrete scatters light into shadow (Oren-Nayar-like feel)
+  float diffWrapped = diff * 0.8 + 0.2 * (1.0 - diff) * 0.2;
+  float I = uAmbient + diffWrapped * uIntensity * atten;
 
   // AO inside emboss depressions
   if (uHasLogo > 0.5) {
@@ -158,7 +148,6 @@ export function ThreeCanvas({
     uScale:      { value: number };
     uRoughness:  { value: number };
     uColorVar:   { value: number };
-    uSpecular:   { value: number };
     uFalloff:    { value: number };
     uLogoMask:   { value: THREE.Texture };
     uEmboss:     { value: number };
@@ -180,7 +169,6 @@ export function ThreeCanvas({
     u.uScale.value      = settings.scale;
     u.uRoughness.value  = settings.roughness;
     u.uColorVar.value   = settings.colorVar;
-    u.uSpecular.value   = settings.specular;
     u.uFalloff.value    = settings.falloff;
   }, [settings]);
 
@@ -226,7 +214,6 @@ export function ThreeCanvas({
       uScale:      { value: s.scale },
       uRoughness:  { value: s.roughness },
       uColorVar:   { value: s.colorVar },
-      uSpecular:   { value: s.specular },
       uFalloff:    { value: s.falloff },
       uLogoMask:   { value: new THREE.Texture() },
       uEmboss:     { value: 0 },
