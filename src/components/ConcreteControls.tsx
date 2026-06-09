@@ -18,10 +18,10 @@ export const defaultConcreteSettings: ConcreteSettings = {
   bump: 12,
   roughness: 0.34,
   colorVar: 0.02,
-  ambient: 0.39,
-  light: 1.39,
+  ambient: 0.18,
+  light: 1.02,
   lightHeight: 0.5,
-  falloff: 0.15,
+  falloff: 0.4,
 };
 
 function Slider({
