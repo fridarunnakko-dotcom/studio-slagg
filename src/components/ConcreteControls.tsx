@@ -5,8 +5,9 @@ import { useState } from "react";
 export interface ConcreteSettings {
   scale: number;
   bump: number;
-  roughness: number;  // micro-noise on normals
-  colorVar: number;   // peak/valley color contrast
+  roughness: number;
+  colorVar: number;
+  specular: number;   // 0 = matte, 1 = shiny
   ambient: number;
   light: number;
   lightHeight: number;
@@ -18,6 +19,7 @@ export const defaultConcreteSettings: ConcreteSettings = {
   bump: 10,
   roughness: 0.4,
   colorVar: 0.06,
+  specular: 0.0,
   ambient: 0.37,
   light: 0.64,
   lightHeight: 0.5,
@@ -128,6 +130,14 @@ export function ConcreteControls({
               step={0.5}
               onChange={set("bump")}
               rebuilds
+            />
+            <Slider
+              label="Shiny / Matt"
+              value={settings.specular}
+              min={0}
+              max={1}
+              step={0.01}
+              onChange={set("specular")}
             />
             <Slider
               label="Roughness"
