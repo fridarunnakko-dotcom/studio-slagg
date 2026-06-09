@@ -25,6 +25,7 @@ uniform float     uBump;
 uniform float     uScale;
 uniform float     uRoughness;  // micro-noise on normals
 uniform float     uColorVar;   // peak/valley color contrast
+uniform float     uFalloff;    // light distance falloff
 uniform sampler2D uLogoMask;
 uniform float     uEmboss;     // 0 → 1 fade-in
 uniform float     uBevel;      // bevel sharpness
