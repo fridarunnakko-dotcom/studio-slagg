@@ -9,9 +9,9 @@ export interface EmbossSettings {
 }
 
 export const defaultEmbossSettings: EmbossSettings = {
-  bevel:    8,
-  ao:       0.15,
-  duration: 800,
+  bevel:    2,
+  ao:       0.05,
+  duration: 2000,
 };
 
 function Slider({
@@ -77,7 +77,7 @@ export function EmbossControls({
         className="w-full flex items-center justify-between px-4 py-3 text-xs uppercase tracking-widest"
         style={{ color: "var(--void)" }}
       >
-        <span>Emboss</span>
+        <span>Deboss</span>
         <span>{open ? "−" : "+"}</span>
       </button>
 
