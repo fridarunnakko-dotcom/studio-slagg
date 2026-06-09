@@ -88,24 +88,38 @@ void main() {
                    baseColor + vec3(uColorVar*0.3, uColorVar*0.4, 0.0),
                    hC);
 
-  // --- Emboss from logo mask ---
+  // --- Emboss: multi-sample gradient for real bevel normals ---
+  // Sample the sharp mask at 4 distances; averaging gives a smooth gradient
+  // over the bevel width while letter corners stay blocky (no blur rounding).
+  // We only tilt N at the edge — inside letters the spackle texture is preserved
+  // so the surface looks physically impressed rather than painted on.
   if (uHasLogo > 0.5) {
-    // uBevel = bevel width in pixels — offset sampling on the sharp mask
-    // keeps letter corners blocky while controlling ramp width precisely
-    float bx = uBevel / uResolution.x;
-    float by = uBevel / uResolution.y;
-    float mC2  = texture2D(uLogoMask, vUv).r;
-    float mL2  = texture2D(uLogoMask, vUv + vec2(-bx,  0)).r;
-    float mR2  = texture2D(uLogoMask, vUv + vec2( bx,  0)).r;
-    float mD2  = texture2D(uLogoMask, vUv + vec2(  0,-by)).r;
-    float mU2  = texture2D(uLogoMask, vUv + vec2(  0, by)).r;
-    vec3 N_bevel   = normalize(vec3((mL2-mR2)*5.0, (mD2-mU2)*5.0, 1.0));
-    float depression = 1.0 - mC2;
-    float edge       = min(1.0, (abs(mL2-mR2) + abs(mD2-mU2)) * 8.0);
-    N = normalize(mix(N, N_bevel, max(depression, edge) * uEmboss));
+    float rx = 1.0 / uResolution.x;
+    float ry = 1.0 / uResolution.y;
+    float d1 = uBevel * 0.25, d2 = uBevel * 0.5, d3 = uBevel * 0.75, d4 = uBevel;
+    float gx =
+      (texture2D(uLogoMask, vUv + vec2(-d1*rx, 0)).r - texture2D(uLogoMask, vUv + vec2( d1*rx, 0)).r) +
+      (texture2D(uLogoMask, vUv + vec2(-d2*rx, 0)).r - texture2D(uLogoMask, vUv + vec2( d2*rx, 0)).r) +
+      (texture2D(uLogoMask, vUv + vec2(-d3*rx, 0)).r - texture2D(uLogoMask, vUv + vec2( d3*rx, 0)).r) +
+      (texture2D(uLogoMask, vUv + vec2(-d4*rx, 0)).r - texture2D(uLogoMask, vUv + vec2( d4*rx, 0)).r);
+    float gy =
+      (texture2D(uLogoMask, vUv + vec2(0, -d1*ry)).r - texture2D(uLogoMask, vUv + vec2(0,  d1*ry)).r) +
+      (texture2D(uLogoMask, vUv + vec2(0, -d2*ry)).r - texture2D(uLogoMask, vUv + vec2(0,  d2*ry)).r) +
+      (texture2D(uLogoMask, vUv + vec2(0, -d3*ry)).r - texture2D(uLogoMask, vUv + vec2(0,  d3*ry)).r) +
+      (texture2D(uLogoMask, vUv + vec2(0, -d4*ry)).r - texture2D(uLogoMask, vUv + vec2(0,  d4*ry)).r);
+    gx /= 4.0; gy /= 4.0;
+
+    // Bevel normal — steepness from uBevel multiplier, only active at edges
+    vec3 N_bevel = normalize(vec3(gx * 3.0, gy * 3.0, 1.0));
+    float edgeStrength = clamp(length(vec2(gx, gy)) * 5.0, 0.0, 1.0) * uEmboss;
+    N = normalize(mix(N, N_bevel, edgeStrength));
+
+    // Subtle shadow inside the depression (much softer than before)
+    float depression = (1.0 - texture2D(uLogoMask, vUv).r) * uEmboss;
+    N = normalize(mix(N, vec3(0.0, 0.0, 1.0), depression * uAO * 0.5));
   }
 
-  // --- Lighting (diffuse only — no specular, concrete is fully matte) ---
+  // --- Lighting ---
   vec2 lightPx = uLight.xy * uResolution;
   float lightZ  = uLight.z  * max(uResolution.x, uResolution.y);
   vec3 L = normalize(vec3(lightPx - px, lightZ));
@@ -115,19 +129,13 @@ void main() {
   float maxD2 = dot(uResolution, uResolution);
   float atten = 1.0 - pow(dist2/maxD2, uFalloff);
 
-  // Wrap the diffuse: real concrete scatters light into shadow (Oren-Nayar-like feel)
   float diffWrapped = diff * 0.8 + 0.2 * (1.0 - diff) * 0.2;
   float I = uAmbient + diffWrapped * uIntensity * atten;
-
-  // AO inside emboss depressions
-  if (uHasLogo > 0.5) {
-    float dep = (1.0 - texture2D(uLogoMask, vUv).r) * uEmboss;
-    I *= 1.0 - dep * uAO;
-  }
 
   gl_FragColor = vec4(clamp(color * I, 0.0, 1.0), 1.0);
 }
 `;
+
 
 export function ThreeCanvas({
   settings,
