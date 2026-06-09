@@ -114,14 +114,16 @@ void main() {
   float maxD2 = dot(uResolution, uResolution);
   float atten = 1.0 - pow(dist2/maxD2, uFalloff);
 
-  // Diffuse wrap — concrete scatters light into shadow
-  float diffWrapped = diff * 0.8 + 0.04 * (1.0 - diff);
-  float I = uAmbient + diffWrapped * uIntensity * atten;
+  // Diffuse response: matte=0 scatters flat like chalk, shiny=1 is sharp Lambert
+  // At 0: shadow floor lifted to ~60% of lit — barely any highlight
+  float diffMatte = mix(0.55, 1.0, diff);
+  float diffBlended = mix(diffMatte, diff, uSpecular);
+  float I = uAmbient + diffBlended * uIntensity * atten;
 
-  // Blinn-Phong specular (only appears when uSpecular > 0)
-  vec3 V = vec3(0.0, 0.0, 1.0); // viewer direction (ortho)
+  // Blinn-Phong specular — only meaningful above 0
+  vec3 V = vec3(0.0, 0.0, 1.0);
   vec3 H = normalize(L + V);
-  float shininess = mix(2.0, 128.0, uSpecular * uSpecular);
+  float shininess = mix(4.0, 128.0, uSpecular * uSpecular);
   float spec = pow(max(0.0, dot(N, H)), shininess) * uSpecular * uIntensity * atten;
   I += spec;
 
