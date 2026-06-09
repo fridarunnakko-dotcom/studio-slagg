@@ -88,7 +88,7 @@ export function EmbossControls({
           <div className="pt-4 flex flex-col gap-4">
             <Slider label="Bevel (px)"  value={settings.bevel}     min={1}   max={40}   step={1}    onChange={set("bevel")} />
             <Slider label="AO"          value={settings.ao}        min={0}   max={0.5}  step={0.01} onChange={set("ao")} />
-            <Slider label="Smoothing"   value={settings.smoothing} min={0}   max={1}    step={0.01} onChange={set("smoothing")} />
+            <Slider label="Letter texture" value={settings.smoothing} min={0}   max={1}    step={0.01} onChange={set("smoothing")} />
             <Slider label="Fade (ms)"   value={settings.duration}  min={100} max={2000} step={50}   onChange={set("duration")} />
           </div>
         </div>
