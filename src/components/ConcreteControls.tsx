@@ -14,14 +14,14 @@ export interface ConcreteSettings {
 }
 
 export const defaultConcreteSettings: ConcreteSettings = {
-  scale: 0.031,
-  bump: 10,
-  roughness: 0.4,
-  colorVar: 0.06,
-  ambient: 0.37,
-  light: 0.64,
+  scale: 0.043,
+  bump: 12,
+  roughness: 0.34,
+  colorVar: 0.02,
+  ambient: 0.39,
+  light: 1.39,
   lightHeight: 0.5,
-  falloff: 1.25,
+  falloff: 0.15,
 };
 
 function Slider({
