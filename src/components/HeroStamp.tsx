@@ -77,7 +77,16 @@ export function HeroStamp({
       });
 
       if (svgRef.current && onLanded) {
-        buildMask(svgRef.current).then(onLanded);
+        buildMask(svgRef.current).then((mask) => {
+          onLanded(mask);
+          // Logo fades out as the emboss fades in — only the surface remains
+          setTimeout(() => {
+            logoControls.start({
+              opacity: 0,
+              transition: { duration: 0.6, ease: "easeInOut" },
+            });
+          }, 200);
+        });
       }
     }, settings.delay);
 
