@@ -90,8 +90,8 @@ void main() {
 
   // --- Emboss from logo mask ---
   if (uHasLogo > 0.5) {
-    float bx = 3.0 / uResolution.x;
-    float by = 3.0 / uResolution.y;
+    float bx = 1.0 / uResolution.x;
+    float by = 1.0 / uResolution.y;
     float mC2  = texture2D(uLogoMask, vUv).r;
     float mL2  = texture2D(uLogoMask, vUv + vec2(-bx,  0)).r;
     float mR2  = texture2D(uLogoMask, vUv + vec2( bx,  0)).r;

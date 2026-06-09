@@ -8,21 +8,34 @@ import { type StampSettings } from "./StampControls";
 function buildMask(svgEl: SVGSVGElement): Promise<HTMLCanvasElement> {
   return new Promise((resolve) => {
     const rect = svgEl.getBoundingClientRect();
-    const canvas = document.createElement("canvas");
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const W = window.innerWidth, H = window.innerHeight;
+
+    // Sharp mask: white background, black letters
+    const sharp = document.createElement("canvas");
+    sharp.width = W; sharp.height = H;
+    const sCtx = sharp.getContext("2d")!;
+    sCtx.fillStyle = "white";
+    sCtx.fillRect(0, 0, W, H);
+
     const serialized  = new XMLSerializer().serializeToString(svgEl);
     const withBlack   = serialized.replace(/fill="currentColor"/g, 'fill="black"');
     const blob = new Blob([withBlack], { type: "image/svg+xml" });
     const url  = URL.createObjectURL(blob);
     const img  = new Image();
     img.onload = () => {
-      ctx.drawImage(img, rect.left, rect.top, rect.width, rect.height);
+      sCtx.drawImage(img, rect.left, rect.top, rect.width, rect.height);
       URL.revokeObjectURL(url);
-      resolve(canvas);
+
+      // Blur to create smooth gradient at letter edges → proper rounded bevel normals
+      // Radius proportional to letter height so it scales with viewport
+      const bevelPx = Math.max(6, Math.round(rect.height * 0.18));
+      const blurred = document.createElement("canvas");
+      blurred.width = W; blurred.height = H;
+      const bCtx = blurred.getContext("2d")!;
+      bCtx.filter = `blur(${bevelPx}px)`;
+      bCtx.drawImage(sharp, 0, 0);
+
+      resolve(blurred);
     };
     img.src = url;
   });
