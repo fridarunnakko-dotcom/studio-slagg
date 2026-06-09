@@ -30,6 +30,7 @@ uniform sampler2D uLogoMask;
 uniform float     uEmboss;     // 0 → 1 fade-in
 uniform float     uBevel;      // bevel sharpness
 uniform float     uAO;         // AO darkening strength
+uniform float     uSmoothing;  // reduces bump+roughness inside letters
 uniform float     uHasLogo;    // 0 or 1
 
 float hash2(int ix, int iy) {
@@ -63,22 +64,30 @@ void main() {
   vec2 px = vUv * uResolution;
   float s = uScale;
 
+  // Inside debossed letters: stamp presses surface flat → less bump + roughness
+  float depression0 = 0.0;
+  if (uHasLogo > 0.5) {
+    depression0 = (1.0 - texture2D(uLogoMask, vUv).r) * uEmboss * uSmoothing;
+  }
+  float bumpScale     = uBump     * (1.0 - depression0);
+  float roughnessScale = uRoughness * (1.0 - depression0);
+
   // --- Macro spackle normal (blobs) ---
   float hC  = spackle(px.x*s,       px.y*s);
   float hL  = spackle((px.x-1.0)*s, px.y*s);
   float hR  = spackle((px.x+1.0)*s, px.y*s);
   float hD  = spackle(px.x*s, (px.y-1.0)*s);
   float hU  = spackle(px.x*s, (px.y+1.0)*s);
-  vec3 N = normalize(vec3((hL-hR)*uBump, (hD-hU)*uBump, 1.0));
+  vec3 N = normalize(vec3((hL-hR)*bumpScale, (hD-hU)*bumpScale, 1.0));
 
-  // --- Micro-roughness: fine grain noise breaks up the "3D model" look ---
+  // --- Micro-roughness ---
   float ms = s * 9.0;
   float mhL = vnoise((px.x-0.5)*ms, px.y*ms);
   float mhR = vnoise((px.x+0.5)*ms, px.y*ms);
   float mhD = vnoise(px.x*ms, (px.y-0.5)*ms);
   float mhU = vnoise(px.x*ms, (px.y+0.5)*ms);
   vec3 N_micro = normalize(vec3((mhL-mhR)*2.5, (mhD-mhU)*2.5, 1.0));
-  N = normalize(mix(N, N_micro, uRoughness));
+  N = normalize(mix(N, N_micro, roughnessScale));
 
   // --- Color variation: darker cement paste in valleys, lighter aggregate peaks ---
   // hC: 0=valley, 1=peak
@@ -166,6 +175,7 @@ export function ThreeCanvas({
     uEmboss:     { value: number };
     uBevel:      { value: number };
     uAO:         { value: number };
+    uSmoothing:  { value: number };
     uHasLogo:    { value: number };
   } | null>(null);
   const embossStartRef = useRef<number | null>(null);
@@ -189,8 +199,9 @@ export function ThreeCanvas({
     embossRef.current = emboss;
     const u = uniformsRef.current;
     if (!u) return;
-    u.uBevel.value = emboss.bevel;
-    u.uAO.value    = emboss.ao;
+    u.uBevel.value     = emboss.bevel;
+    u.uAO.value        = emboss.ao;
+    u.uSmoothing.value = emboss.smoothing;
   }, [emboss]);
 
   // When logoMask arrives, upload as texture and start emboss fade-in
@@ -232,6 +243,7 @@ export function ThreeCanvas({
       uEmboss:     { value: 0 },
       uBevel:      { value: embossRef.current.bevel },
       uAO:         { value: embossRef.current.ao },
+      uSmoothing:  { value: embossRef.current.smoothing },
       uHasLogo:    { value: 0 },
     };
     uniformsRef.current = uniforms;
