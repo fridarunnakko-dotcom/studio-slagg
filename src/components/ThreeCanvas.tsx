@@ -54,10 +54,28 @@ float vnoise(float px, float py) {
 }
 
 float spackle(float x, float y) {
-  float a = vnoise(x, y);
-  float b = vnoise(x*2.8+3.1, y*2.8+1.7)*0.38;
-  float c = vnoise(x*7.0+7.2, y*7.0+5.1)*0.10;
-  return pow(a*0.65+b+c, 1.6);
+  // Troweled plaster: flow field → sweeping arcs, elongated ridges, fine grain
+
+  // Very low-freq flow field defines local trowel direction (large arcs)
+  float fa = vnoise(x * 0.018 + 1.3, y * 0.018 + 2.7) * 6.28318;
+  float cosA = cos(fa), sinA = sin(fa);
+
+  // Elongated noise: 8:1 aspect ratio along/across stroke
+  float u =  x * cosA + y * sinA;
+  float v = (-x * sinA + y * cosA) * 8.0;
+  float stroke = vnoise(u * 0.5, v * 0.5);
+
+  // Secondary finer strokes for natural variation
+  float fa2 = vnoise(x * 0.04 + 5.1, y * 0.04 + 3.8) * 6.28318;
+  float u2  =  x * cos(fa2) + y * sin(fa2);
+  float v2  = (-x * sin(fa2) + y * cos(fa2)) * 6.0;
+  float stroke2 = vnoise(u2 * 1.2, v2 * 1.2) * 0.3;
+
+  // Fine isotropic grain on top
+  float grain = vnoise(x * 3.5 + 3.1, y * 3.5 + 1.7) * 0.12
+              + vnoise(x * 8.0 + 7.2, y * 8.0 + 5.4) * 0.06;
+
+  return stroke * 0.62 + stroke2 + grain;
 }
 
 void main() {
