@@ -53,28 +53,22 @@ float vnoise(float px, float py) {
     hash2(ix+1, iy+1)*ux      *uy;
 }
 
-float spackle(float x, float y) {
-  float a = vnoise(x, y);
-  float b = vnoise(x*2.8+3.1, y*2.8+1.7)*0.38;
-  float c = vnoise(x*7.0+7.2, y*7.0+5.1)*0.10;
-  return pow(a*0.65+b+c, 1.6);
+// Grainy aggregate — dense small rounded pebbles, no directional sweep
+float aggregate(float x, float y) {
+  // Primary pebble layer: moderate frequency, rounded by smoothstep power
+  float a = vnoise(x,          y         );
+  float b = vnoise(x*1.9+2.3,  y*1.9+5.1 ) * 0.55;
+  float c = vnoise(x*3.7+1.1,  y*3.7+3.9 ) * 0.28;
+  float d = vnoise(x*6.8+4.4,  y*6.8+7.2 ) * 0.12;
+  float h = (a + b + c + d) / (1.0 + 0.55 + 0.28 + 0.12);
+  // Soft rounding: bring peaks up, push valleys down — avoids sharp spikes
+  return h * h * (3.0 - 2.0 * h);
 }
 
-// Troweled stucco — sweeping arcs + fine grain, used inside debossed letters
-float plaster(float x, float y) {
-  float fa = vnoise(x * 0.018 + 1.3, y * 0.018 + 2.7) * 6.28318;
-  float cosA = cos(fa), sinA = sin(fa);
-  float u =  x * cosA + y * sinA;
-  float v = (-x * sinA + y * cosA) * 8.0;
-  float stroke = vnoise(u * 0.5, v * 0.5);
-  float fa2 = vnoise(x * 0.04 + 5.1, y * 0.04 + 3.8) * 6.28318;
-  float u2  =  x * cos(fa2) + y * sin(fa2);
-  float v2  = (-x * sin(fa2) + y * cos(fa2)) * 6.0;
-  float stroke2 = vnoise(u2 * 1.2, v2 * 1.2) * 0.3;
-  float grain = vnoise(x * 3.5 + 3.1, y * 3.5 + 1.7) * 0.12
-              + vnoise(x * 8.0 + 7.2, y * 8.0 + 5.4) * 0.06;
-  return stroke * 0.62 + stroke2 + grain;
-}
+float spackle(float x, float y) { return aggregate(x, y); }
+
+// Letter interior: same grainy aggregate — continuous texture impression
+float plaster(float x, float y) { return aggregate(x, y); }
 
 void main() {
   vec2 px = vUv * uResolution;
