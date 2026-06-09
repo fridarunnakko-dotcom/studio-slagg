@@ -30,7 +30,9 @@ uniform sampler2D uLogoMask;
 uniform float     uEmboss;     // 0 → 1 fade-in
 uniform float     uBevel;      // bevel sharpness
 uniform float     uAO;         // AO darkening strength
-uniform float     uSmoothing;  // reduces bump+roughness inside letters
+uniform float     uSmoothing;  // letter texture blend amount
+uniform float     uLetterScale;
+uniform float     uLetterBump;
 uniform float     uHasLogo;    // 0 or 1
 
 float hash2(int ix, int iy) {
@@ -81,12 +83,14 @@ void main() {
   }
   float blend = depression0 * uSmoothing; // uSmoothing now = plaster blend amount
 
-  float hC  = mix(spackle(px.x*s,       px.y*s),       plaster(px.x*s,       px.y*s),       blend);
-  float hL  = mix(spackle((px.x-1.0)*s, px.y*s),       plaster((px.x-1.0)*s, px.y*s),       blend);
-  float hR  = mix(spackle((px.x+1.0)*s, px.y*s),       plaster((px.x+1.0)*s, px.y*s),       blend);
-  float hD  = mix(spackle(px.x*s, (px.y-1.0)*s),       plaster(px.x*s, (px.y-1.0)*s),       blend);
-  float hU  = mix(spackle(px.x*s, (px.y+1.0)*s),       plaster(px.x*s, (px.y+1.0)*s),       blend);
-  vec3 N = normalize(vec3((hL-hR)*uBump, (hD-hU)*uBump, 1.0));
+  float ls = uLetterScale;
+  float hC  = mix(spackle(px.x*s,       px.y*s),       plaster(px.x*ls,       px.y*ls),       blend);
+  float hL  = mix(spackle((px.x-1.0)*s, px.y*s),       plaster((px.x-1.0)*ls, px.y*ls),       blend);
+  float hR  = mix(spackle((px.x+1.0)*s, px.y*s),       plaster((px.x+1.0)*ls, px.y*ls),       blend);
+  float hD  = mix(spackle(px.x*s, (px.y-1.0)*s),       plaster(px.x*ls, (px.y-1.0)*ls),       blend);
+  float hU  = mix(spackle(px.x*s, (px.y+1.0)*s),       plaster(px.x*ls, (px.y+1.0)*ls),       blend);
+  float bumpMix = mix(uBump, uLetterBump, blend);
+  vec3 N = normalize(vec3((hL-hR)*bumpMix, (hD-hU)*bumpMix, 1.0));
 
   // --- Micro-roughness ---
   float ms = s * 9.0;
@@ -183,8 +187,10 @@ export function ThreeCanvas({
     uEmboss:     { value: number };
     uBevel:      { value: number };
     uAO:         { value: number };
-    uSmoothing:  { value: number };
-    uHasLogo:    { value: number };
+    uSmoothing:    { value: number };
+    uLetterScale:  { value: number };
+    uLetterBump:   { value: number };
+    uHasLogo:      { value: number };
   } | null>(null);
   const embossStartRef = useRef<number | null>(null);
   const logoMaskRef    = useRef(logoMask);
@@ -207,9 +213,11 @@ export function ThreeCanvas({
     embossRef.current = emboss;
     const u = uniformsRef.current;
     if (!u) return;
-    u.uBevel.value     = emboss.bevel;
-    u.uAO.value        = emboss.ao;
-    u.uSmoothing.value = emboss.smoothing;
+    u.uBevel.value       = emboss.bevel;
+    u.uAO.value          = emboss.ao;
+    u.uSmoothing.value   = emboss.smoothing;
+    u.uLetterScale.value = emboss.letterScale;
+    u.uLetterBump.value  = emboss.letterBump;
   }, [emboss]);
 
   // When logoMask arrives, upload as texture and start emboss fade-in
@@ -251,8 +259,10 @@ export function ThreeCanvas({
       uEmboss:     { value: 0 },
       uBevel:      { value: embossRef.current.bevel },
       uAO:         { value: embossRef.current.ao },
-      uSmoothing:  { value: embossRef.current.smoothing },
-      uHasLogo:    { value: 0 },
+      uSmoothing:   { value: embossRef.current.smoothing },
+      uLetterScale: { value: embossRef.current.letterScale },
+      uLetterBump:  { value: embossRef.current.letterBump },
+      uHasLogo:     { value: 0 },
     };
     uniformsRef.current = uniforms;
 
