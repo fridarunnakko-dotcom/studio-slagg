@@ -87,7 +87,7 @@ export function HeroStamp({
 
   return (
     <div className="flex items-center justify-center w-full max-w-2xl">
-      <motion.div animate={logoControls} style={{ width: "100%", color: "var(--ink)" }}>
+      <motion.div animate={logoControls} initial={{ opacity: 0 }} style={{ width: "100%", color: "var(--ink)" }}>
         <Logo ref={svgRef} style={{ width: "100%", height: "auto" }} />
       </motion.div>
     </div>
