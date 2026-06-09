@@ -109,8 +109,8 @@ void main() {
       (texture2D(uLogoMask, vUv + vec2(0, -d4*ry)).r - texture2D(uLogoMask, vUv + vec2(0,  d4*ry)).r);
     gx /= 4.0; gy /= 4.0;
 
-    // Bevel normal — steepness from uBevel multiplier, only active at edges
-    vec3 N_bevel = normalize(vec3(gx * 3.0, gy * 3.0, 1.0));
+    // Negate gradient → normals slope INTO the depression (impressed, not embossed)
+    vec3 N_bevel = normalize(vec3(-gx * 3.0, -gy * 3.0, 1.0));
     float edgeStrength = clamp(length(vec2(gx, gy)) * 5.0, 0.0, 1.0) * uEmboss;
     N = normalize(mix(N, N_bevel, edgeStrength));
 
