@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { type ConcreteSettings } from "./ConcreteControls";
+import { type EmbossSettings } from "./EmbossControls";
 
 const vert = /* glsl */`
 varying vec2 vUv;
@@ -24,6 +25,8 @@ uniform float     uBump;
 uniform float     uScale;
 uniform sampler2D uLogoMask;
 uniform float     uEmboss;     // 0 → 1 fade-in
+uniform float     uBevel;      // bevel sharpness
+uniform float     uAO;         // AO darkening strength
 uniform float     uHasLogo;    // 0 or 1
 
 float hash2(int ix, int iy) {
@@ -76,7 +79,7 @@ void main() {
     float mU2 = texture2D(uLogoMask, vUv + vec2(  0, by)).r;
 
     // Bevel normal: gradient of mask as height map (white=up, black=pressed-in)
-    vec3 N_bevel = normalize(vec3((mL2-mR2)*6.0, (mD2-mU2)*6.0, 1.0));
+    vec3 N_bevel = normalize(vec3((mL2-mR2)*uBevel, (mD2-mU2)*uBevel, 1.0));
 
     // Depression: 0 = outside letters, 1 = inside letters (black in mask)
     float depression = 1.0 - mC;
@@ -101,7 +104,7 @@ void main() {
   // Subtle AO inside letter depressions
   if (uHasLogo > 0.5) {
     float depression2 = (1.0 - texture2D(uLogoMask, vUv).r) * uEmboss;
-    I *= 1.0 - depression2 * 0.15;
+    I *= 1.0 - depression2 * uAO;
   }
 
   vec3 color = vec3(0.906, 0.925, 0.408) * I;
@@ -111,13 +114,16 @@ void main() {
 
 export function ThreeCanvas({
   settings,
+  emboss,
   logoMask,
 }: {
   settings: ConcreteSettings;
+  emboss: EmbossSettings;
   logoMask: HTMLCanvasElement | null;
 }) {
   const containerRef  = useRef<HTMLDivElement>(null);
   const settingsRef   = useRef(settings);
+  const embossRef     = useRef(emboss);
   const uniformsRef   = useRef<{
     uResolution: { value: THREE.Vector2 };
     uLight:      { value: THREE.Vector3 };
@@ -127,6 +133,8 @@ export function ThreeCanvas({
     uScale:      { value: number };
     uLogoMask:   { value: THREE.Texture };
     uEmboss:     { value: number };
+    uBevel:      { value: number };
+    uAO:         { value: number };
     uHasLogo:    { value: number };
   } | null>(null);
   const embossStartRef = useRef<number | null>(null);
@@ -142,6 +150,14 @@ export function ThreeCanvas({
     u.uBump.value      = settings.bump;
     u.uScale.value     = settings.scale;
   }, [settings]);
+
+  useEffect(() => {
+    embossRef.current = emboss;
+    const u = uniformsRef.current;
+    if (!u) return;
+    u.uBevel.value = emboss.bevel;
+    u.uAO.value    = emboss.ao;
+  }, [emboss]);
 
   // When logoMask arrives, upload as texture and start emboss fade-in
   useEffect(() => {
@@ -177,6 +193,8 @@ export function ThreeCanvas({
       uScale:      { value: s.scale },
       uLogoMask:   { value: new THREE.Texture() },
       uEmboss:     { value: 0 },
+      uBevel:      { value: embossRef.current.bevel },
+      uAO:         { value: embossRef.current.ao },
       uHasLogo:    { value: 0 },
     };
     uniformsRef.current = uniforms;
@@ -202,13 +220,13 @@ export function ThreeCanvas({
     }
     window.addEventListener("mousemove", onMouseMove);
 
-    const EMBOSS_DURATION = 800; // ms
+    const EMBOSS_DURATION = () => embossRef.current.duration;
     let rafId: number;
     function animate() {
       rafId = requestAnimationFrame(animate);
       // Animate emboss strength
       if (embossStartRef.current !== null) {
-        const t = (performance.now() - embossStartRef.current) / EMBOSS_DURATION;
+        const t = (performance.now() - embossStartRef.current) / EMBOSS_DURATION();
         uniforms.uEmboss.value = Math.min(1, t);
         if (t >= 1) embossStartRef.current = null;
       }
