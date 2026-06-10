@@ -34,7 +34,7 @@ export default function Home() {
 
       <div style={{ height: "100vh" }} />
 
-      <div className="relative z-20" style={{ background: "var(--paper)" }}>
+      <div className="relative z-20 cursor-cross" style={{ background: "var(--paper)" }}>
         <SelectedWorks />
         <Footer />
       </div>

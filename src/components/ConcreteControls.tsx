@@ -84,7 +84,7 @@ export function ConcreteControls({
 
   return (
     <div
-      className="fixed bottom-6 left-6 z-50 rounded-sm shadow-lg"
+      className="fixed bottom-6 left-6 z-50 rounded-sm shadow-lg cursor-cross"
       style={{
         background: "var(--paper)",
         border: "1px solid var(--line-strong)",
