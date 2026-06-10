@@ -26,6 +26,7 @@ uniform float     uScale;
 uniform float     uRoughness;  // micro-noise on normals
 uniform float     uColorVar;   // peak/valley color contrast
 uniform float     uFalloff;    // light distance falloff
+uniform vec3      uBaseColor;
 uniform sampler2D uLogoMask;
 uniform float     uEmboss;     // 0 → 1 fade-in
 uniform float     uBevel;      // bevel sharpness
@@ -103,7 +104,7 @@ void main() {
 
   // --- Color variation: darker cement paste in valleys, lighter aggregate peaks ---
   // hC: 0=valley, 1=peak
-  vec3 baseColor = vec3(0.906, 0.925, 0.408);
+  vec3 baseColor = uBaseColor;
   // Valleys shift slightly warmer/darker, peaks stay neon
   vec3 color = mix(baseColor - vec3(uColorVar*1.2, uColorVar*0.8, uColorVar*0.3),
                    baseColor + vec3(uColorVar*0.3, uColorVar*0.4, 0.0),
@@ -161,6 +162,10 @@ void main() {
 `;
 
 
+function hexToColor(hex: string) {
+  return new THREE.Color(hex).convertSRGBToLinear();
+}
+
 export function ThreeCanvas({
   settings,
   emboss,
@@ -185,6 +190,7 @@ export function ThreeCanvas({
     uRoughness:  { value: number };
     uColorVar:   { value: number };
     uFalloff:    { value: number };
+    uBaseColor:  { value: THREE.Color };
     uLogoMask:   { value: THREE.Texture };
     uEmboss:     { value: number };
     uBevel:      { value: number };
@@ -213,6 +219,7 @@ export function ThreeCanvas({
     u.uRoughness.value  = settings.roughness;
     u.uColorVar.value   = settings.colorVar;
     u.uFalloff.value    = settings.falloff;
+    u.uBaseColor.value.set(hexToColor(settings.baseColor));
   }, [settings]);
 
   useEffect(() => {
@@ -261,6 +268,7 @@ export function ThreeCanvas({
       uRoughness:  { value: s.roughness },
       uColorVar:   { value: s.colorVar },
       uFalloff:    { value: s.falloff },
+      uBaseColor:  { value: hexToColor(s.baseColor) },
       uLogoMask:   { value: new THREE.Texture() },
       uEmboss:     { value: 0 },
       uBevel:      { value: embossRef.current.bevel },

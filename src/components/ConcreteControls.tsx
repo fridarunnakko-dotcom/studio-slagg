@@ -5,12 +5,13 @@ import { useState } from "react";
 export interface ConcreteSettings {
   scale: number;
   bump: number;
-  roughness: number;  // micro-noise on normals
-  colorVar: number;   // peak/valley color contrast
+  roughness: number;
+  colorVar: number;
   ambient: number;
   light: number;
   lightHeight: number;
   falloff: number;
+  baseColor: string;
 }
 
 export const defaultConcreteSettings: ConcreteSettings = {
@@ -22,6 +23,7 @@ export const defaultConcreteSettings: ConcreteSettings = {
   light: 1.09,
   lightHeight: 0.3,
   falloff: 0.4,
+  baseColor: "#e7ec68",
 };
 
 function Slider({
@@ -145,6 +147,19 @@ export function ConcreteControls({
               step={0.005}
               onChange={set("colorVar")}
             />
+            <label className="flex flex-col gap-1">
+              <div className="flex justify-between text-xs" style={{ fontFamily: "var(--font-ui)", color: "var(--void)" }}>
+                <span>Color</span>
+                <span style={{ color: "var(--ink)" }}>{settings.baseColor}</span>
+              </div>
+              <input
+                type="color"
+                value={settings.baseColor}
+                onChange={(e) => onChange({ ...settings, baseColor: e.target.value })}
+                className="w-full h-8 cursor-pointer rounded-sm"
+                style={{ border: "1px solid var(--line)", background: "none" }}
+              />
+            </label>
           </div>
 
           <div
