@@ -6,7 +6,7 @@ import { SelectedWorks } from "@/components/SelectedWorks";
 import { Footer } from "@/components/Footer";
 import { ThreeCanvas } from "@/components/ThreeCanvas";
 import { ConcreteControls, defaultConcreteSettings } from "@/components/ConcreteControls";
-import { StampControls, defaultSettings as defaultStampSettings } from "@/components/StampControls";
+import { defaultSettings as defaultStampSettings } from "@/components/StampControls";
 import { defaultEmbossSettings } from "@/components/EmbossControls";
 
 export default function Home() {
@@ -41,7 +41,6 @@ export default function Home() {
 
       <ConcreteControls settings={concrete} onChange={setConcrete} />
 
-      <StampControls    settings={stamp}    onChange={setStamp} onReplay={onReplay} />
     </>
   );
 }
