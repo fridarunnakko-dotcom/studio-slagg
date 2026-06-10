@@ -7,7 +7,7 @@ import { Footer } from "@/components/Footer";
 import { ThreeCanvas } from "@/components/ThreeCanvas";
 import { ConcreteControls, defaultConcreteSettings } from "@/components/ConcreteControls";
 import { StampControls, defaultSettings as defaultStampSettings } from "@/components/StampControls";
-import { EmbossControls, defaultEmbossSettings } from "@/components/EmbossControls";
+import { defaultEmbossSettings } from "@/components/EmbossControls";
 
 export default function Home() {
   const [concrete, setConcrete] = useState(defaultConcreteSettings);
@@ -36,7 +36,7 @@ export default function Home() {
       </div>
 
       <ConcreteControls settings={concrete} onChange={setConcrete} />
-      <EmbossControls   settings={emboss}   onChange={setEmboss} />
+
       <StampControls    settings={stamp}    onChange={setStamp} onReplay={onReplay} />
     </>
   );
