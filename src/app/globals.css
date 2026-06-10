@@ -34,6 +34,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-snap-type: y mandatory;
+}
+
 body {
   background: var(--paper);
   color: var(--ink);

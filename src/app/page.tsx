@@ -32,9 +32,9 @@ export default function Home() {
         <HeroStamp settings={stamp} replayKey={replayKey} onLanded={onLanded} />
       </div>
 
-      <div style={{ height: "100vh" }} />
+      <div style={{ height: "100vh", scrollSnapAlign: "start" }} />
 
-      <div className="relative z-20 cursor-cross" style={{ background: "var(--paper)" }}>
+      <div className="relative z-20 cursor-cross" style={{ background: "var(--paper)", scrollSnapAlign: "start" }}>
         <SelectedWorks />
         <Footer />
       </div>
