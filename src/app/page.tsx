@@ -5,7 +5,7 @@ import { HeroStamp } from "@/components/HeroStamp";
 import { SelectedWorks } from "@/components/SelectedWorks";
 import { Footer } from "@/components/Footer";
 import { ThreeCanvas } from "@/components/ThreeCanvas";
-import { ConcreteControls, defaultConcreteSettings } from "@/components/ConcreteControls";
+import { defaultConcreteSettings } from "@/components/ConcreteControls";
 import { defaultSettings as defaultStampSettings } from "@/components/StampControls";
 import { defaultEmbossSettings } from "@/components/EmbossControls";
 
@@ -39,7 +39,6 @@ export default function Home() {
         <Footer />
       </div>
 
-      <ConcreteControls settings={concrete} onChange={setConcrete} />
 
     </>
   );
