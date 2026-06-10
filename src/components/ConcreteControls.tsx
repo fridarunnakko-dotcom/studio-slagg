@@ -23,7 +23,7 @@ export const defaultConcreteSettings: ConcreteSettings = {
   light: 1.09,
   lightHeight: 0.3,
   falloff: 0.4,
-  baseColor: "#e7ec68",
+  baseColor: "#fffcd6",
 };
 
 function Slider({
