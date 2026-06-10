@@ -15,8 +15,8 @@ export interface ConcreteSettings {
 }
 
 export const defaultConcreteSettings: ConcreteSettings = {
-  scale: 0.043,
-  bump: 12,
+  scale: 0.055,
+  bump: 9,
   roughness: 0.34,
   colorVar: 0.02,
   ambient: 0.27,
