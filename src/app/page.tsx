@@ -20,7 +20,7 @@ export default function Home() {
   const onLanded = useCallback((mask: HTMLCanvasElement) => {
     setLogoMask(mask);
     // Unlock after logo fade-out finishes (200ms delay + 600ms fade)
-    setTimeout(() => setLightLocked(false), 800);
+    setTimeout(() => setLightLocked(false), 1800);
   }, []);
   const onReplay = useCallback(() => { setLogoMask(null); setLightLocked(true); setReplayKey(k => k + 1); }, []);
 
