@@ -295,20 +295,43 @@ export function ThreeCanvas({
     // Fixed upper-left position while animation plays
     uniforms.uLight.value.set(0.15, 0.85, settingsRef.current.lightHeight);
 
+    // Current light position (what the shader sees) and mouse target
+    const lightPos = { x: 0.15, y: 0.85 };
+    const mouseTarget = { x: 0.15, y: 0.85 };
+    let unlockTime: number | null = null;
+
     function onMouseMove(e: MouseEvent) {
-      if (lockLightRef.current) return;
-      uniforms.uLight.value.set(
-        e.clientX / window.innerWidth,
-        1 - e.clientY / window.innerHeight,
-        settingsRef.current.lightHeight,
-      );
+      mouseTarget.x = e.clientX / window.innerWidth;
+      mouseTarget.y = 1 - e.clientY / window.innerHeight;
     }
     window.addEventListener("mousemove", onMouseMove);
 
     const EMBOSS_DURATION = () => embossRef.current.duration;
+    const TRANSITION_MS = 1200;
     let rafId: number;
     function animate() {
       rafId = requestAnimationFrame(animate);
+
+      // Detect unlock edge and record time
+      if (!lockLightRef.current && unlockTime === null) {
+        unlockTime = performance.now();
+      }
+      if (lockLightRef.current) {
+        unlockTime = null;
+      }
+
+      // Lerp light toward mouse; speed ramps up smoothly after unlock
+      if (!lockLightRef.current) {
+        const elapsed = unlockTime !== null ? performance.now() - unlockTime : TRANSITION_MS;
+        const ramp = Math.min(elapsed / TRANSITION_MS, 1);
+        // ease-in-out ramp so initial movement is gentle
+        const eased = ramp * ramp * (3 - 2 * ramp);
+        const speed = 0.02 + eased * 0.1; // lerp factor: slow at first, settles to 0.12
+        lightPos.x += (mouseTarget.x - lightPos.x) * speed;
+        lightPos.y += (mouseTarget.y - lightPos.y) * speed;
+        uniforms.uLight.value.set(lightPos.x, lightPos.y, settingsRef.current.lightHeight);
+      }
+
       // Animate emboss strength
       if (embossStartRef.current !== null) {
         const t = (performance.now() - embossStartRef.current) / EMBOSS_DURATION();
