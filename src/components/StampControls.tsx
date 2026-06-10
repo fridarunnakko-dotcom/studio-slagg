@@ -19,7 +19,7 @@ export const defaultSettings: StampSettings = {
   duration: 0.55,
   blur: 8,
   squish: 0.94,
-  delay: 850,
+  delay: 1250,
   ease: [0.79, -0.01, 0.67, 1.0],
 };
 
