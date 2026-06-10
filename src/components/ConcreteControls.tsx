@@ -19,10 +19,10 @@ export const defaultConcreteSettings: ConcreteSettings = {
   bump: 12,
   roughness: 0.34,
   colorVar: 0.02,
-  ambient: 0.18,
-  light: 1.09,
+  ambient: 0.27,
+  light: 0.94,
   lightHeight: 0.3,
-  falloff: 0.4,
+  falloff: 0.45,
   baseColor: "#fffcd6",
 };
 
