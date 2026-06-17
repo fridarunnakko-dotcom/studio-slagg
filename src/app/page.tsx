@@ -5,9 +5,9 @@ import { HeroStamp } from "@/components/HeroStamp";
 import { SelectedWorks } from "@/components/SelectedWorks";
 import { Footer } from "@/components/Footer";
 import { ThreeCanvas } from "@/components/ThreeCanvas";
-import { defaultConcreteSettings } from "@/components/ConcreteControls";
-import { defaultSettings as defaultStampSettings } from "@/components/StampControls";
-import { defaultEmbossSettings } from "@/components/EmbossControls";
+import { ConcreteControls, defaultConcreteSettings } from "@/components/ConcreteControls";
+import { StampControls, defaultSettings as defaultStampSettings } from "@/components/StampControls";
+import { EmbossControls, defaultEmbossSettings } from "@/components/EmbossControls";
 
 export default function Home() {
   const [concrete, setConcrete] = useState(defaultConcreteSettings);
@@ -16,10 +16,10 @@ export default function Home() {
   const [replayKey,    setReplayKey]    = useState(0);
   const [logoMask,     setLogoMask]     = useState<HTMLCanvasElement | null>(null);
   const [lightLocked,  setLightLocked]  = useState(true);
+  const [showPanels,   setShowPanels]   = useState(true);
 
   const onLanded = useCallback((mask: HTMLCanvasElement) => {
     setLogoMask(mask);
-    // Unlock after logo fade-out finishes (200ms delay + 600ms fade)
     setTimeout(() => setLightLocked(false), 1500);
   }, []);
   const onReplay = useCallback(() => { setLogoMask(null); setLightLocked(true); setReplayKey(k => k + 1); }, []);
@@ -39,6 +39,33 @@ export default function Home() {
         <Footer />
       </div>
 
+      <button
+        onClick={() => setShowPanels(p => !p)}
+        className="fixed z-50 cursor-cross"
+        style={{
+          bottom: 24,
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "var(--paper)",
+          border: "1px solid var(--line-strong)",
+          padding: "8px 16px",
+          fontFamily: "var(--font-ui)",
+          fontSize: 10,
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          color: "var(--void)",
+        }}
+      >
+        {showPanels ? "Hide panels" : "Show panels"}
+      </button>
+
+      {showPanels && (
+        <>
+          <ConcreteControls settings={concrete} onChange={setConcrete} />
+          <EmbossControls settings={emboss} onChange={setEmboss} />
+          <StampControls settings={stamp} onChange={setStamp} onReplay={onReplay} />
+        </>
+      )}
     </>
   );
 }
