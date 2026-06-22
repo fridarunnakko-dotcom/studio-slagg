@@ -12,6 +12,7 @@ export interface ConcreteSettings {
   lightHeight: number;
   falloff: number;
   baseColor: string;
+  varColor: string;
 }
 
 export const defaultConcreteSettings: ConcreteSettings = {
@@ -24,6 +25,7 @@ export const defaultConcreteSettings: ConcreteSettings = {
   lightHeight: 0.25,
   falloff: 1.05,
   baseColor: "#f2f2f2",
+  varColor: "#8b7a5e",
 };
 
 function Slider({
@@ -156,6 +158,19 @@ export function ConcreteControls({
                 type="color"
                 value={settings.baseColor}
                 onChange={(e) => onChange({ ...settings, baseColor: e.target.value })}
+                className="w-full h-8 cursor-pointer rounded-sm"
+                style={{ border: "1px solid var(--line)", background: "none" }}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <div className="flex justify-between text-xs" style={{ fontFamily: "var(--font-ui)", color: "var(--void)" }}>
+                <span>Var tint</span>
+                <span style={{ color: "var(--ink)" }}>{settings.varColor}</span>
+              </div>
+              <input
+                type="color"
+                value={settings.varColor}
+                onChange={(e) => onChange({ ...settings, varColor: e.target.value })}
                 className="w-full h-8 cursor-pointer rounded-sm"
                 style={{ border: "1px solid var(--line)", background: "none" }}
               />
