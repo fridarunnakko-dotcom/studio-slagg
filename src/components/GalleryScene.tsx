@@ -29,10 +29,10 @@ export function GalleryScene() {
       1,
       5000,
     );
-    camera.position.set(0, 170, 0);
+    camera.position.set(0, 170, 1400);
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 170, -400);
+    controls.target.set(0, 170, 0);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.maxPolarAngle = Math.PI * 0.85;
