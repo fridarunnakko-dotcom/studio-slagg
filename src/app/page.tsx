@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { HeroStamp } from "@/components/HeroStamp";
-import { SelectedWorks } from "@/components/SelectedWorks";
 import { Footer } from "@/components/Footer";
 import { ThreeCanvas } from "@/components/ThreeCanvas";
+import { GalleryScene } from "@/components/GalleryScene";
 import { ConcreteControls, defaultConcreteSettings } from "@/components/ConcreteControls";
 import { StampControls, defaultSettings as defaultStampSettings } from "@/components/StampControls";
 import { EmbossControls, defaultEmbossSettings } from "@/components/EmbossControls";
@@ -34,9 +34,8 @@ export default function Home() {
 
       <div style={{ height: "100vh", scrollSnapAlign: "start" }} />
 
-      <div className="relative z-20 cursor-cross" style={{ background: "var(--paper)", scrollSnapAlign: "start" }}>
-        <SelectedWorks />
-        <Footer />
+      <div className="relative z-20" style={{ scrollSnapAlign: "start" }}>
+        <GalleryScene />
       </div>
 
       <button
