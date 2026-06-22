@@ -29,7 +29,7 @@ export function GalleryScene() {
       1,
       5000,
     );
-    camera.position.set(0, 170, 1400);
+    camera.position.set(0, 170, 2200);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 170, 0);
