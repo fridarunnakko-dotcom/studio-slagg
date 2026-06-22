@@ -293,11 +293,10 @@ export function ThreeCanvas({
     scene.add(new THREE.Mesh(geometry, material));
 
     // Fixed upper-left position while animation plays
-    uniforms.uLight.value.set(0.15, 0.85, settingsRef.current.lightHeight);
+    uniforms.uLight.value.set(0.5, 0.85, settingsRef.current.lightHeight);
 
-    // Current light position (what the shader sees) and mouse target
-    const lightPos = { x: 0.15, y: 0.85 };
-    const mouseTarget = { x: 0.15, y: 0.85 };
+    const lightPos = { x: 0.5, y: 0.85 };
+    const mouseTarget = { x: 0.5, y: 0.85 };
     let unlockTime: number | null = null;
 
     function onMouseMove(e: MouseEvent) {

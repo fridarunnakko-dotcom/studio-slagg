@@ -15,15 +15,15 @@ export interface ConcreteSettings {
 }
 
 export const defaultConcreteSettings: ConcreteSettings = {
-  scale: 0.055,
+  scale: 0.06,
   bump: 9,
-  roughness: 0.36,
-  colorVar: 0.05,
-  ambient: 0.42,
-  light: 0.78,
+  roughness: 0.41,
+  colorVar: 0.025,
+  ambient: 0.14,
+  light: 1.5,
   lightHeight: 0.25,
-  falloff: 1.1,
-  baseColor: "#fffd00",
+  falloff: 1.05,
+  baseColor: "#f2f2f2",
 };
 
 function Slider({
