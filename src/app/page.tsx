@@ -16,7 +16,7 @@ export default function Home() {
   const [replayKey,    setReplayKey]    = useState(0);
   const [logoMask,     setLogoMask]     = useState<HTMLCanvasElement | null>(null);
   const [lightLocked,  setLightLocked]  = useState(true);
-  const [showPanels,   setShowPanels]   = useState(true);
+  const [showPanels,   setShowPanels]   = useState(false);
 
   const onLanded = useCallback((mask: HTMLCanvasElement) => {
     setLogoMask(mask);
