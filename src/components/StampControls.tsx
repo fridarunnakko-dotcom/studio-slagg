@@ -15,12 +15,12 @@ export interface StampSettings {
 }
 
 export const defaultSettings: StampSettings = {
-  initialScale: 5.5,
-  duration: 0.55,
-  blur: 8,
+  initialScale: 7,
+  duration: 0.45,
+  blur: 11,
   squish: 0.94,
-  delay: 1250,
-  ease: [0.79, -0.01, 0.67, 1.0],
+  delay: 1400,
+  ease: [0.99, 0.37, 0.79, 1.0],
 };
 
 function Slider({
