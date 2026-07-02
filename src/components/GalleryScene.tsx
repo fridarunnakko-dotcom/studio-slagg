@@ -9,7 +9,7 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 // Gallery is ~1200×1200×550 cm, Z axis = depth, door at z≈-1210
 export const WAYPOINTS = [
   // 0 — Front exterior, looking at entrance
-  { pos: [0, 170, 2200],     target: [0, 170, 0] },
+  { pos: [0, 170, 1500],     target: [0, 170, 0] },
   // 1 — Just inside entrance, looking into gallery
   { pos: [0, 170, -900],     target: [0, 170, -1800] },
   // 2 — Center of gallery, looking toward back wall
